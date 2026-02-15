@@ -1,0 +1,26 @@
+/* src/styles/reset.css */
+/* 全局样式重置 - 清除body默认边距 */
+body {
+  margin: 0;
+  padding: 0;
+  /* 可选：统一盒模型 */
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+/* 可选：清除其他标签的默认样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: inherit;
+}
+
+ul,
+li {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
