@@ -4,16 +4,7 @@
       <h1>我的足迹</h1>
     </div>
 
-    <!-- 1. 加载中提示（可选，提升体验） -->
-    <van-loading
-      v-if="!isLoaded"
-      type="spinner"
-      size="24px"
-      class="van-loading"
-    />
-
-    <!-- 2. 延迟渲染列表：isLoaded 为 true 才显示 -->
-    <div class="footprint-list" v-else>
+    <div class="footprint-list">
       <div
         class="footprint-item"
         v-for="(item, index) in footprintList"
@@ -36,15 +27,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-
-// 1. 初始化数据为空，通过 ref 声明响应式变量
-const footprintList = ref([])
-// 2. 标记是否加载完成（控制渲染）
-const isLoaded = ref(false)
-
-// 模拟足迹原始数据（先定义，不直接赋值）
-const rawFootprintList = [
+// 模拟足迹数据
+const footprintList = [
   {
     title: '转角咖啡',
     date: '2026-02-15',
@@ -110,16 +94,6 @@ const rawFootprintList = [
     time: '08:00'
   }
 ]
-
-// 3. 组件挂载后启动定时器，2秒后赋值并标记加载完成
-onMounted(() => {
-  setTimeout(() => {
-    // 赋值数据
-    footprintList.value = rawFootprintList
-    // 标记加载完成，触发列表渲染
-    isLoaded.value = true
-  }, 2000) // 2000毫秒 = 2秒
-})
 </script>
 
 <style scoped>
@@ -138,14 +112,6 @@ onMounted(() => {
   font-size: 24px;
   margin: 0;
   color: #333;
-}
-
-/* 加载中提示样式（可选） */
-.loading-tip {
-  text-align: center;
-  padding: 50px 0;
-  color: #999;
-  font-size: 16px;
 }
 
 .footprint-list {

@@ -5,6 +5,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { VantResolver } from '@vant/auto-import-resolver';
+import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -22,6 +23,35 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
+  },
+  // 构建配置
+  build: {
+    // Vite 的打包配置都在 build 下，而非顶层 output
+    outDir: 'dist', // 输出目录（默认 dist）
+    assetsDir: 'assets', // 静态资源根目录（基础，后续分类基于此）
+    rollupOptions: {
+      // Rollup 的输出配置（对应 Webpack 的 output）
+      output: {
+        // 1. 配置非 CSS 类静态资源（图片、字体、其他二进制文件）
+        assetFileNames: (assetInfo) => {
+          // 按文件后缀分类
+          const extname = path.extname(assetInfo.name).toLowerCase()
+          if (/\.(png|jpe?g|gif|svg|webp|ico)$/.test(extname)) {
+            return 'images/[name]-[hash][extname]' // 图片：assets/images/xxx.png
+          } else if (/\.(woff2?|eot|ttf|otf)$/.test(extname)) {
+            return 'fonts/[name]-[hash][extname]' // 字体：assets/fonts/xxx.ttf
+          }else if (/\.(css|less|scss|sass|styl)$/.test(extname)) {
+            return 'styles/[name]-[hash][extname]'
+          }
+          // 其他资源：assets/others/xxx.xxx
+          return 'others/[name]-[hash][extname]'
+        },
+        // 2. 配置 JS 分块（对应 Webpack 的 chunkFileNames）
+        chunkFileNames: 'js/[name]-[hash].js', // 异步 chunk：assets/js/xxx.js
+        // 3. 配置入口 JS（对应 Webpack 的 entryFileNames）
+        entryFileNames: 'js/[name]-[hash].js' // 入口 JS：assets/js/xxx.js
+      }
+    }
   },
   // 新增：开发服务器配置（核心是 proxy 代理）
   server: {
