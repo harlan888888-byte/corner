@@ -1,9 +1,12 @@
 <template>
   <teleport to="body">
-    <div class="city-picker-container">
+    <div
+      class="city-picker-container"
+      :class="{ 'enter-active': isEnterActive, 'leave-active': isLeaveActive }"
+    >
       <div ref="headerRef" class="city-picker-header">
         <h2>选择城市</h2>
-        <button class="close-btn" @click="$emit('close')">取消</button>
+        <button class="close-btn" @click="handleClose">取消</button>
       </div>
 
       <div ref="contentRef" class="city-picker-content" @scroll="handleScroll">
@@ -63,6 +66,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const emit = defineEmits(['select', 'close'])
+
+// 动画状态
+const isEnterActive = ref(false)
+const isLeaveActive = ref(false)
 
 // 城市数据
 const cities = ref([
@@ -199,6 +206,23 @@ const handleScroll = (event) => {
     currentLetter.value = current
   }
 }
+
+// 组件挂载时触发进入动画
+onMounted(() => {
+  setTimeout(() => {
+    isEnterActive.value = true
+  }, 10)
+})
+
+// 点击取消按钮时触发离开动画
+const handleClose = () => {
+  isLeaveActive.value = true
+
+  // 动画结束后执行关闭操作
+  setTimeout(() => {
+    emit('close')
+  }, 300)
+}
 </script>
 
 <style scoped>
@@ -219,6 +243,16 @@ const handleScroll = (event) => {
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
   box-sizing: border-box;
+  transition: transform 0.3s ease;
+  transform: translateX(100%);
+}
+
+.city-picker-container.enter-active {
+  transform: translateX(0);
+}
+
+.city-picker-container.leave-active {
+  transform: translateX(100%);
 }
 
 /* 确保在所有设备上都能覆盖整个屏幕 */

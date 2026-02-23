@@ -3,6 +3,10 @@ import request from '@/utils/request'
 export const getStoreInfo = (params) =>
   request.get('/home/get_store_info', { params })
 
+// 获取店铺详情
+export const getStoreDetail = (storeid) =>
+  request.get('/home/get_store_detail', { params: { storeid } })
+
 // // 添加文章分类
 // export const artAddChannelService = (data) => request.post('/my/cate/add', data)
 // // 编辑文章分类

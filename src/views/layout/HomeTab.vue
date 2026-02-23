@@ -14,11 +14,13 @@
             {{ selectedCity ? selectedCity.name : '选择城市' }}
           </button>
 
-          <CityPicker
-            v-if="showCityPicker"
-            @select="handleCitySelect"
-            @close="showCityPicker = false"
-          />
+          <transition name="city-picker" mode="out-in">
+            <CityPicker
+              v-if="showCityPicker"
+              @select="handleCitySelect"
+              @close="showCityPicker = false"
+            />
+          </transition>
         </div>
       </div>
       <SearchBar
@@ -34,29 +36,43 @@
     <!-- 无数据时显示空状态图片 -->
     <EmptyState v-if="!btnLoading && storeInfoList.length === 0" />
 
-    <ul v-else ref="storeList">
-      <StoreItem v-for="item in storeInfoList" :key="item.id" :item="item" />
-      <!-- 使用封装的 LoadMore 组件，放在 ul 内部作为最后一个子元素，只有当数据不为空时才显示 -->
-      <li v-if="storeInfoList.length > 0" class="load-more-item">
-        <LoadMore
-          :loading="btnLoading"
-          :hasMore="hasMoreData"
-          :loadingText="loadingText"
-          :noMoreText="noMoreText"
-        />
-      </li>
-    </ul>
+    <StoreList
+      v-else
+      :storeList="storeInfoList"
+      :loading="btnLoading"
+      :hasMore="hasMoreData"
+      :loadingText="loadingText"
+      :noMoreText="noMoreText"
+      @loadMore="getStoreInfoList"
+    >
+      <template #default="{ item }">
+        <StoreItem :item="item" />
+      </template>
+    </StoreList>
+
+    <!-- 路由出口，用于显示店铺详情页面 -->
+    <template>
+      <router-view
+        v-if="route.path === '/hometab/store-detail'"
+        v-slot="{ Component }"
+      >
+        <component :is="Component" />
+      </router-view>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { getStoreInfo } from '@/api/home/store'
-import StoreItem from '@/components/business/StoreItem.vue'
-import LoadMore from '@/components/base/LoadMore.vue'
+import StoreList from '@/components/business/StoreList.vue'
+import StoreItem from '@/components/page/home/StoreItem.vue'
 import SearchBar from '@/components/base/SearchBar.vue'
 import CityPicker from '@/components/business/CityPicker.vue'
 import EmptyState from '@/components/base/EmptyState.vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 // 加载状态
 const btnLoading = ref(false)
@@ -83,9 +99,6 @@ const onSearch = (val) => {
 const handleInput = (val) => {
   searchValue.value = val
 }
-
-// ul 元素的引用
-const storeList = ref(null)
 
 // 城市选择相关状态
 const showCityPicker = ref(false)
@@ -132,6 +145,12 @@ const resetPaginationAndFetchData = () => {
   hasMoreData.value = true
   storeInfoList.value = []
   getStoreInfoList()
+
+  // 滚动条回到顶部
+  const scrollContainer = document.querySelector('.page-container')
+  if (scrollContainer) {
+    scrollContainer.scrollTop = 0
+  }
 }
 
 // 分页相关状态
@@ -183,56 +202,11 @@ const getStoreInfoList = async () => {
   }
 }
 
-// 滚动事件处理函数
-const handleScroll = (event) => {
-  // 确定滚动容器
-  const target = event.target === window ? window : event.target
-  const scrollTop =
-    target.scrollTop ||
-    document.documentElement.scrollTop ||
-    document.body.scrollTop
-  const scrollHeight =
-    target.scrollHeight ||
-    document.documentElement.scrollHeight ||
-    document.body.scrollHeight
-  const clientHeight =
-    target.clientHeight ||
-    document.documentElement.clientHeight ||
-    document.body.clientHeight
-
-  // 检测滚动到底部
-  if (scrollTop + clientHeight >= scrollHeight - 30) {
+// 组件挂载时获取数据
+onMounted(() => {
+  if (route.path === '/hometab') {
     getStoreInfoList()
   }
-}
-
-// 滚动容器引用
-const scrollContainer = ref(null)
-
-// 组件挂载时添加滚动事件监听
-onMounted(() => {
-  getStoreInfoList()
-
-  // 查找父级的 .page-container 滚动容器
-  setTimeout(() => {
-    let container = storeList.value
-    while (container && !container.classList.contains('page-container')) {
-      container = container.parentElement
-    }
-
-    if (container) {
-      scrollContainer.value = container
-      container.addEventListener('scroll', handleScroll)
-    }
-  }, 100)
-})
-
-// 组件卸载时移除滚动事件监听
-onUnmounted(() => {
-  if (scrollContainer.value) {
-    scrollContainer.value.removeEventListener('scroll', handleScroll)
-  }
-  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -240,10 +214,6 @@ onUnmounted(() => {
 .home-tab-container {
   background-color: #f6f6f6;
   min-height: 100vh;
-
-  ul {
-    padding: 0 5px;
-  }
 }
 
 .tab-top-item {

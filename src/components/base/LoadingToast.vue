@@ -59,11 +59,13 @@ const props = defineProps({
 }
 
 .loading-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 120px;
+  width: 100%;
+  max-width: 150px;
   min-height: 120px;
   background-color: rgba(0, 0, 0, 0.7);
   border-radius: 10px;
@@ -72,9 +74,15 @@ const props = defineProps({
   box-sizing: border-box;
 }
 
-.loading-text {
+:deep(.van-loading) {
   color: #ffffff;
   margin: 0;
   text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  max-width: 100%;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 </style>

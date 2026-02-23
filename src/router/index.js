@@ -18,7 +18,14 @@ const router = createRouter({
       children: [
         {
           path: '/hometab',
-          component: () => import('@/views/layout/HomeTab.vue')
+          component: () => import('@/views/layout/HomeTab.vue'),
+          children: [
+            {
+              path: 'store-detail',
+              name: 'StoreDetail',
+              component: () => import('@/views/home/StoreDetail.vue')
+            }
+          ]
         },
         {
           path: '/footprint',

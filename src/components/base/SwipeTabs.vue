@@ -22,7 +22,9 @@
           >
             <!-- 懒加载核心：只渲染当前激活/已加载的 Tab 组件 -->
             <template v-if="index === activeTab || loadedTabs.includes(index)">
-              <component :is="tab.component" />
+              <keep-alive>
+                <component :is="tab.component" />
+              </keep-alive>
             </template>
           </div>
         </van-swipe-item>

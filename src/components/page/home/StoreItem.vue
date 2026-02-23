@@ -1,5 +1,5 @@
 <template>
-  <li class="store-item-box">
+  <li class="store-item-box" @click="goToDetail">
     <div class="store-item">
       <div class="left-item">
         <div class="store-img">
@@ -27,7 +27,7 @@
           <span>{{ item.title }}</span>
         </div>
         <div class="store-address text-item">
-          <div class="target-map">
+          <div class="target-map" @click.stop>
             <TargetMap :address="item.name + item.address">
               <img class="map-icon" src="@/assets/icons/map.svg" alt="位置" />
             </TargetMap>
@@ -42,6 +42,7 @@
 
 <script setup>
 import { defineProps } from 'vue'
+import { useRouter } from 'vue-router'
 import TargetMap from '@/components/base/TargetMap.vue'
 import LazyImage from '@/components/base/LazyImage.vue'
 
@@ -51,6 +52,18 @@ const props = defineProps({
     required: true
   }
 })
+
+const router = useRouter()
+
+// 跳转到店铺详情页面
+const goToDetail = () => {
+  router.push({
+    path: '/hometab/store-detail',
+    query: {
+      storeid: props.item.id
+    }
+  })
+}
 </script>
 
 <style lang="scss" scoped>
