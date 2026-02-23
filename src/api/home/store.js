@@ -1,6 +1,7 @@
 import request from '@/utils/request'
 // 获取店铺信息
-export const getStoreInfo = () => request.get('/home/get_store_info')
+export const getStoreInfo = (params) =>
+  request.get('/home/get_store_info', { params })
 
 // // 添加文章分类
 // export const artAddChannelService = (data) => request.post('/my/cate/add', data)

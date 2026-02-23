@@ -22,9 +22,6 @@
           >
             <!-- 懒加载核心：只渲染当前激活/已加载的 Tab 组件 -->
             <template v-if="index === activeTab || loadedTabs.includes(index)">
-              <!-- 可选：加 loading 占位，优化首次加载体验 -->
-
-              <!-- ✅ 去掉错误的 @mounted，改用 ref 或切换时标记 -->
               <component :is="tab.component" />
             </template>
           </div>

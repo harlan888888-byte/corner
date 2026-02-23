@@ -118,7 +118,7 @@ onMounted(() => {
     footprintList.value = rawFootprintList
     // 标记加载完成，触发列表渲染
     isLoaded.value = true
-  }, 2000) // 2000毫秒 = 2秒
+  }, 1000) // 2000毫秒 = 2秒
 })
 </script>
 
