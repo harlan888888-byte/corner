@@ -50,29 +50,65 @@
       </template>
     </StoreList>
 
-    <!-- 路由出口，用于显示店铺详情页面 -->
-    <template>
-      <router-view
-        v-if="route.path === '/hometab/store-detail'"
-        v-slot="{ Component }"
-      >
-        <component :is="Component" />
-      </router-view>
-    </template>
+    <!-- 店铺详情组件 -->
+    <StoreDetail
+      v-if="storeid"
+      :storeid="storeid"
+      :show-enter-animation="showEnterAnimation"
+      @close="closeStoreDetail"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getStoreInfo } from '@/api/home/store'
 import StoreList from '@/components/business/StoreList.vue'
 import StoreItem from '@/components/page/home/StoreItem.vue'
 import SearchBar from '@/components/base/SearchBar.vue'
 import CityPicker from '@/components/business/CityPicker.vue'
 import EmptyState from '@/components/base/EmptyState.vue'
-import { useRoute } from 'vue-router'
+import StoreDetail from '@/views/home/StoreDetail.vue'
+import LoadingToast from '@/components/base/LoadingToast.vue'
 
 const route = useRoute()
+const router = useRouter()
+
+// 店铺详情相关
+const storeid = ref(route.query.storeid || '')
+const showEnterAnimation = ref(false)
+const isMounted = ref(false)
+
+// 监听路由变化，获取 storeid 参数
+watch(
+  () => route.query.storeid,
+  (newStoreid, oldStoreid) => {
+    // 如果组件已经挂载，并且之前没有 storeid，现在有了，说明是通过点击店铺列表项访问的，应该执行动画
+    if (isMounted.value && !oldStoreid && newStoreid) {
+      showEnterAnimation.value = true
+    } else {
+      showEnterAnimation.value = false
+    }
+    storeid.value = newStoreid || ''
+  },
+  { immediate: true }
+)
+
+// 组件挂载后设置 isMounted 为 true
+onMounted(() => {
+  isMounted.value = true
+  getStoreInfoList()
+})
+
+// 关闭店铺详情
+const closeStoreDetail = () => {
+  // 移除路由参数，返回首页
+  router.push({
+    path: '/hometab',
+    query: {}
+  })
+}
 
 // 加载状态
 const btnLoading = ref(false)
@@ -201,13 +237,6 @@ const getStoreInfoList = async () => {
     btnLoading.value = false
   }
 }
-
-// 组件挂载时获取数据
-onMounted(() => {
-  if (route.path === '/hometab') {
-    getStoreInfoList()
-  }
-})
 </script>
 
 <style lang="scss" scoped>

@@ -58,7 +58,7 @@ const router = useRouter()
 // 跳转到店铺详情页面
 const goToDetail = () => {
   router.push({
-    path: '/hometab/store-detail',
+    path: '/hometab',
     query: {
       storeid: props.item.id
     }

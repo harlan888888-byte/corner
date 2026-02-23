@@ -44,13 +44,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
 import TargetMap from '@/components/base/TargetMap.vue'
 import { getStoreDetail } from '@/api/home/store'
 
-const router = useRouter()
-const route = useRoute()
+const props = defineProps({
+  storeid: {
+    type: String,
+    required: true
+  },
+  showEnterAnimation: {
+    type: Boolean,
+    default: true
+  }
+})
+
+const emit = defineEmits(['close'])
 
 // 店铺信息
 const storeInfo = ref({})
@@ -68,16 +77,14 @@ const goBack = () => {
   isLeaveActive.value = true
 
   setTimeout(() => {
-    router.push({
-      path: '/hometab'
-    })
+    emit('close')
   }, 300)
 }
 
 // 获取店铺详情
 const getStoreDetailInfo = async () => {
   // 获取 storeid 参数
-  const storeid = route.query.storeid
+  const storeid = props.storeid
   if (!storeid) {
     error.value = '店铺 ID 不存在'
     loading.value = false
@@ -105,14 +112,29 @@ const getStoreDetailInfo = async () => {
   }
 }
 
+// 监听 storeid 变化
+watch(
+  () => props.storeid,
+  (newStoreid) => {
+    if (newStoreid) {
+      getStoreDetailInfo()
+    }
+  }
+)
+
 // 组件挂载时获取店铺详情
 onMounted(() => {
   getStoreDetailInfo()
 
-  // 触发进入动画
-  setTimeout(() => {
+  // 只有当需要显示入场动画时，才触发进入动画
+  if (props.showEnterAnimation) {
+    setTimeout(() => {
+      isEnterActive.value = true
+    }, 10)
+  } else {
+    // 直接显示组件，不执行动画
     isEnterActive.value = true
-  }, 10)
+  }
 })
 </script>
 
