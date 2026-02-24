@@ -50,13 +50,6 @@
       </template>
     </StoreList>
 
-    <!-- 店铺详情组件 -->
-    <StoreDetail
-      v-if="storeid"
-      :storeid="storeid"
-      :show-enter-animation="showEnterAnimation"
-      @close="closeStoreDetail"
-    />
   </div>
 </template>
 
@@ -69,7 +62,6 @@ import StoreItem from '@/components/page/home/StoreItem.vue'
 import SearchBar from '@/components/base/SearchBar.vue'
 import CityPicker from '@/components/business/CityPicker.vue'
 import EmptyState from '@/components/base/EmptyState.vue'
-import StoreDetail from '@/views/home/StoreDetail.vue'
 import LoadingToast from '@/components/base/LoadingToast.vue'
 
 const route = useRoute()

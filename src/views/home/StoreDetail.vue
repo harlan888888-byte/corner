@@ -47,19 +47,9 @@
 import { ref, onMounted, watch } from 'vue'
 import TargetMap from '@/components/base/TargetMap.vue'
 import { getStoreDetail } from '@/api/home/store'
-
-const props = defineProps({
-  storeid: {
-    type: String,
-    required: true
-  },
-  showEnterAnimation: {
-    type: Boolean,
-    default: true
-  }
-})
-
-const emit = defineEmits(['close'])
+import { useRoute, useRouter } from 'vue-router'
+const route = useRoute()
+const router = useRouter()
 
 // 店铺信息
 const storeInfo = ref({})
@@ -77,14 +67,16 @@ const goBack = () => {
   isLeaveActive.value = true
 
   setTimeout(() => {
-    emit('close')
+    router.back()
   }, 300)
 }
 
 // 获取店铺详情
 const getStoreDetailInfo = async () => {
   // 获取 storeid 参数
-  const storeid = props.storeid
+  const storeid = route.params.storeid
+  console.log(storeid)
+
   if (!storeid) {
     error.value = '店铺 ID 不存在'
     loading.value = false
@@ -112,27 +104,30 @@ const getStoreDetailInfo = async () => {
   }
 }
 
-// 监听 storeid 变化
-watch(
-  () => props.storeid,
-  (newStoreid) => {
-    if (newStoreid) {
-      getStoreDetailInfo()
-    }
-  }
-)
-
 // 组件挂载时获取店铺详情
 onMounted(() => {
   getStoreDetailInfo()
 
-  // 只有当需要显示入场动画时，才触发进入动画
-  if (props.showEnterAnimation) {
+  // 检查是否是通过其他组件进入
+  const isFromOtherComponent = sessionStorage.getItem('isFromOtherComponent')
+
+  if (isFromOtherComponent) {
+    // 通过其他组件进入，执行滑入动画
     setTimeout(() => {
       isEnterActive.value = true
     }, 10)
+
+    // 清除标记，避免下次刷新时误判
+    sessionStorage.removeItem('isFromOtherComponent')
   } else {
-    // 直接显示组件，不执行动画
+    // 不是通过其他组件进入（可能是直接访问或刷新），不执行滑入动画
+    // 直接设置组件在屏幕内，禁用过渡效果
+    const container = document.querySelector('.store-detail-container')
+    if (container) {
+      container.style.transform = 'translateX(0)'
+      container.style.transition = 'none'
+    }
+    // 然后设置 isEnterActive 为 true
     isEnterActive.value = true
   }
 })

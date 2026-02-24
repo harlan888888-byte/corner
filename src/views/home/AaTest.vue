@@ -1,9 +1,7 @@
 <template>
-  <teleport to="body">
-    <div class="aatest-container">
-      <h1>测试组件</h1>
-    </div>
-  </teleport>
+  <div class="aatest-container">
+    <h1>测试组件</h1>
+  </div>
 </template>
 
 <script setup>

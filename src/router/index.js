@@ -33,23 +33,11 @@ const router = createRouter({
           component: () => import('@/views/layout/MineTab.vue')
         },
         {
-          path: '/aatest',
-          name: 'aatest',
-          component: () => import('@/views/home/AaTest.vue')
+          path: '/store-detail/:storeid',
+          name: 'StoreDetail',
+          component: () => import('@/views/home/StoreDetail.vue')
         }
       ]
-    },
-    {
-      path: '/footprint',
-      component: () => import('@/views/footprint/index.vue')
-    },
-    {
-      path: '/plan',
-      component: () => import('@/views/plan/index.vue')
-    },
-    {
-      path: '/mine',
-      component: () => import('@/views/mine/index.vue')
     }
   ]
 })

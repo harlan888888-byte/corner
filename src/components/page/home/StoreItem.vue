@@ -57,11 +57,11 @@ const router = useRouter()
 
 // 跳转到店铺详情页面
 const goToDetail = () => {
+  // 设置标记，说明是通过其他页面进入
+  sessionStorage.setItem('isFromOtherComponent', 'true')
+
   router.push({
-    path: '/hometab',
-    query: {
-      storeid: props.item.id
-    }
+    path: `/store-detail/${props.item.id}`
   })
 }
 </script>

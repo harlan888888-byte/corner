@@ -1,7 +1,7 @@
 <template>
   <div class="foot-print-tab-container">
     <div class="tab-top-item">
-      <h1>我的足迹</h1>
+      <h1 @click="goToDetail">我的足迹</h1>
     </div>
 
     <!-- 1. 加载中提示（可选，提升体验） -->
@@ -110,6 +110,20 @@ const rawFootprintList = [
     time: '08:00'
   }
 ]
+
+// 4. 引入路由模块
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+// 5. 定义跳转方法
+const goToDetail = () => {
+  // 设置标记，说明是通过其他页面进入
+  sessionStorage.setItem('isFromOtherComponent', 'true')
+
+  router.push({
+    path: `/store-detail/12`
+  })
+}
 
 // 3. 组件挂载后启动定时器，2秒后赋值并标记加载完成
 onMounted(() => {
