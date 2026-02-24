@@ -23,6 +23,12 @@
         {{ tab.title }}
       </van-tabbar-item>
     </van-tabbar>
+
+    <template v-if="route.name == 'StoreDetail'">
+      <router-view v-slot="{ Component }">
+        <component :is="Component" />
+      </router-view>
+    </template>
   </div>
 </template>
 

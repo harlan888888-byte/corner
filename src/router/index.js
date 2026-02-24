@@ -31,6 +31,11 @@ const router = createRouter({
         {
           path: '/mine',
           component: () => import('@/views/layout/MineTab.vue')
+        },
+        {
+          path: '/aatest',
+          name: 'aatest',
+          component: () => import('@/views/home/AaTest.vue')
         }
       ]
     },

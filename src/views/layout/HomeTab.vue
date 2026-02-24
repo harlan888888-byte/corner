@@ -3,7 +3,7 @@
     <div class="tab-top-item">
       <div class="top-item">
         <div class="title-item">
-          <h1>街角</h1>
+          <h1 @click="handleClickTitle">街角</h1>
         </div>
 
         <div class="city-selector">
@@ -74,6 +74,14 @@ import LoadingToast from '@/components/base/LoadingToast.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+// 处理点击标题事件
+const handleClickTitle = () => {
+  router.push({
+    path: '/aatest',
+    query: {}
+  })
+}
 
 // 店铺详情相关
 const storeid = ref(route.query.storeid || '')
