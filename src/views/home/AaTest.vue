@@ -1,11 +1,25 @@
 <template>
   <div class="aatest-container">
-    <h1>测试组件</h1>
+    <div class="box">
+      <h1 @click="handleClickTitle">测试组件</h1>
+    </div>
+
+    <router-view v-slot="{ Component }">
+      <transition name="slide-fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const handleClickTitle = () => {
+  router.push({ name: 'IndexPage' })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -16,16 +30,21 @@ import { ref, onMounted, watch } from 'vue'
   right: 0;
   bottom: 0;
   background-color: blue;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: white;
   font-size: 24px;
-}
-
-/* 阻止背景滚动 */
-:global(body:has(.aatest-container)) {
+  z-index: 9999;
   overflow: hidden;
 }
+
+// .box {
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: center;
+//   align-items: center;
+// }
+
+// /* 阻止背景滚动 */
+// :global(body:has(.aatest-container)) {
+//   overflow: hidden;
+// }
 </style>

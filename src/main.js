@@ -5,6 +5,7 @@ import App from '@/App.vue'
 import router from '@/router'
 import '@/style/base.css'
 import '@/style/vant-common.css'
+import '@/style/vue-common.css'
 
 const app = createApp(App)
 

@@ -24,11 +24,16 @@
       </van-tabbar-item>
     </van-tabbar>
 
-    <template v-if="route.name == 'StoreDetail'">
-      <router-view v-slot="{ Component }">
-        <component :is="Component" />
-      </router-view>
-    </template>
+    <router-view v-slot="{ Component }">
+      <transition name="slide-fade" mode="out-in">
+        <component
+          :is="Component"
+          v-if="
+            !['/hometab', '/footprint', '/plan', '/mine'].includes(route.path)
+          "
+        />
+      </transition>
+    </router-view>
   </div>
 </template>
 

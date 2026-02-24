@@ -49,7 +49,6 @@
         <StoreItem :item="item" />
       </template>
     </StoreList>
-
   </div>
 </template>
 

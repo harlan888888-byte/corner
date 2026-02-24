@@ -36,6 +36,18 @@ const router = createRouter({
           path: '/store-detail/:storeid',
           name: 'StoreDetail',
           component: () => import('@/views/home/StoreDetail.vue')
+        },
+        {
+          path: '/aatest',
+          name: 'AATest',
+          component: () => import('@/views/home/AaTest.vue'),
+          children: [
+            {
+              path: 'indexpage',
+              name: 'IndexPage',
+              component: () => import('@/views/home/IndexPage.vue')
+            }
+          ]
         }
       ]
     }

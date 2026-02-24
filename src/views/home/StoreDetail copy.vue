@@ -1,41 +1,46 @@
 <template>
-  <div class="store-detail-container">
-    <!-- 顶部导航栏 -->
-    <div class="nav-bar">
-      <button class="back-btn" @click="goBack">
-        <img src="@/assets/icons/back.svg" alt="返回" class="back-icon" />
-      </button>
-      <span class="nav-title">{{ storeInfo.name }}</span>
-    </div>
-
-    <!-- 店铺详情内容 -->
-    <div class="store-detail-content">
-      <!-- 店铺图片 -->
-      <div class="store-image">
-        <img :src="storeInfo.store_img" :alt="storeInfo.name" />
+  <teleport to="body">
+    <div
+      class="store-detail-container"
+      :class="{ 'enter-active': isEnterActive, 'leave-active': isLeaveActive }"
+    >
+      <!-- 顶部导航栏 -->
+      <div class="nav-bar">
+        <button class="back-btn" @click="goBack">
+          <img src="@/assets/icons/back.svg" alt="返回" class="back-icon" />
+        </button>
+        <span class="nav-title">{{ storeInfo.name }}</span>
       </div>
 
-      <!-- 店铺信息 -->
-      <div class="store-info">
-        <h2 class="store-name">{{ storeInfo.name }}</h2>
-        <div class="store-rating-average">
-          <span class="rating">{{ storeInfo.rating }}分</span>
-          <span class="average-cost">￥{{ storeInfo.average_cost }}/人</span>
+      <!-- 店铺详情内容 -->
+      <div class="store-detail-content">
+        <!-- 店铺图片 -->
+        <div class="store-image">
+          <img :src="storeInfo.store_img" :alt="storeInfo.name" />
         </div>
-        <div class="store-title" v-if="storeInfo.title">
-          <span>{{ storeInfo.title }}</span>
-        </div>
-        <div class="store-address">
-          <TargetMap
-            :address="(storeInfo.name || '') + (storeInfo.address || '')"
-          >
-            <img class="map-icon" src="@/assets/icons/map.svg" alt="位置" />
-          </TargetMap>
-          <span>{{ storeInfo.address }}</span>
+
+        <!-- 店铺信息 -->
+        <div class="store-info">
+          <h2 class="store-name">{{ storeInfo.name }}</h2>
+          <div class="store-rating-average">
+            <span class="rating">{{ storeInfo.rating }}分</span>
+            <span class="average-cost">￥{{ storeInfo.average_cost }}/人</span>
+          </div>
+          <div class="store-title" v-if="storeInfo.title">
+            <span>{{ storeInfo.title }}</span>
+          </div>
+          <div class="store-address">
+            <TargetMap
+              :address="(storeInfo.name || '') + (storeInfo.address || '')"
+            >
+              <img class="map-icon" src="@/assets/icons/map.svg" alt="位置" />
+            </TargetMap>
+            <span>{{ storeInfo.address }}</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </teleport>
 </template>
 
 <script setup>
@@ -52,10 +57,18 @@ const storeInfo = ref({})
 const loading = ref(true)
 // 错误信息
 const error = ref('')
+// 动画状态
+const isEnterActive = ref(false)
+const isLeaveActive = ref(false)
 
 // 返回首页
 const goBack = () => {
-  router.back()
+  // 触发离开动画
+  isLeaveActive.value = true
+
+  setTimeout(() => {
+    router.back()
+  }, 300)
 }
 
 // 获取店铺详情
@@ -94,6 +107,29 @@ const getStoreDetailInfo = async () => {
 // 组件挂载时获取店铺详情
 onMounted(() => {
   getStoreDetailInfo()
+
+  // 检查是否是通过其他组件进入
+  const isFromOtherComponent = sessionStorage.getItem('isFromOtherComponent')
+
+  if (isFromOtherComponent) {
+    // 通过其他组件进入，执行滑入动画
+    setTimeout(() => {
+      isEnterActive.value = true
+    }, 10)
+
+    // 清除标记，避免下次刷新时误判
+    sessionStorage.removeItem('isFromOtherComponent')
+  } else {
+    // 不是通过其他组件进入（可能是直接访问或刷新），不执行滑入动画
+    // 直接设置组件在屏幕内，禁用过渡效果
+    const container = document.querySelector('.store-detail-container')
+    if (container) {
+      container.style.transform = 'translateX(0)'
+      container.style.transition = 'none'
+    }
+    // 然后设置 isEnterActive 为 true
+    isEnterActive.value = true
+  }
 })
 </script>
 
@@ -108,6 +144,16 @@ onMounted(() => {
   bottom: 0;
   overflow-y: auto;
   z-index: 1000;
+  transition: transform 0.3s ease;
+  transform: translateX(100%);
+}
+
+.store-detail-container.enter-active {
+  transform: translateX(0);
+}
+
+.store-detail-container.leave-active {
+  transform: translateX(100%);
 }
 
 /* 阻止背景滚动 */
