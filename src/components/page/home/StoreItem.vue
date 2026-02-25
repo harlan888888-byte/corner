@@ -57,9 +57,6 @@ const router = useRouter()
 
 // 跳转到店铺详情页面
 const goToDetail = () => {
-  // 设置标记，说明是通过其他页面进入
-  sessionStorage.setItem('isFromOtherComponent', 'true')
-
   router.push({
     path: `/store-detail/${props.item.id}`
   })
@@ -139,15 +136,5 @@ $item-border-radius: 5px;
 .map-icon {
   width: 25px;
   height: 25px;
-}
-
-// 加载动画
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

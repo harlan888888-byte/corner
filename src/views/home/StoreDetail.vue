@@ -12,7 +12,11 @@
     <div class="store-detail-content">
       <!-- 店铺图片 -->
       <div class="store-image">
-        <img :src="storeInfo.store_img" :alt="storeInfo.name" />
+        <img
+          :src="storeInfo.store_img || defaultImgSrc"
+          :alt="storeInfo.name"
+          @click="handleImgClick(0)"
+        />
       </div>
 
       <!-- 店铺信息 -->
@@ -35,14 +39,31 @@
         </div>
       </div>
     </div>
+
+    <ImagePreviewModal
+      :images="images"
+      :current-index="currentIndex"
+      :is-modal-show="isModalShow"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import TargetMap from '@/components/base/TargetMap.vue'
 import { getStoreDetail } from '@/api/home/store'
-import { useRoute, useRouter } from 'vue-router'
+import defaultImgSrc from '@/assets/icons/miss_store.svg'
+import { useImagePreview } from '@/utils/useImagePreview'
+
+const images = ref([])
+
+// 使用图片预览组合式函数
+const {
+  isModalShow,
+  currentIndex,
+  handleImgClick,
+  handleImgDblClick,
+  openPreview
+} = useImagePreview()
+
 const route = useRoute()
 const router = useRouter()
 
@@ -62,7 +83,6 @@ const goBack = () => {
 const getStoreDetailInfo = async () => {
   // 获取 storeid 参数
   const storeid = route.params.storeid
-  console.log(storeid)
 
   if (!storeid) {
     error.value = '店铺 ID 不存在'
@@ -80,6 +100,7 @@ const getStoreDetailInfo = async () => {
     // 处理响应
     if (res.data.code === 200) {
       storeInfo.value = res.data.data
+      images.value = [storeInfo.value.store_img]
     } else {
       error.value = res.data.message || '获取店铺详情失败'
     }
@@ -165,7 +186,7 @@ onMounted(() => {
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    // object-fit: cover;
   }
 }
 

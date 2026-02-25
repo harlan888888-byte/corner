@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite'  // 只保留 Vite 的 defineConfig
 import vue from '@vitejs/plugin-vue'
-import AutoImport from 'unplugin-auto-import/vite'
+import AutoImport from 'unplugin-auto-import/vite'  // Vite 插件
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { VantResolver } from '@vant/auto-import-resolver';
@@ -12,10 +12,21 @@ export default defineConfig({
   plugins: [
     vue(),
     AutoImport({
-      resolvers: [ElementPlusResolver(), VantResolver()]
+      imports: ['vue', 'vue-router', 'pinia'],
+      dts: 'src/types/auto-imports.d.ts',
+      include: [/\.vue$/, /\.vue\?vue/, /\.ts$/, /\.tsx$/],
+      resolvers: [ElementPlusResolver(), VantResolver()],
     }),
     Components({
-      resolvers: [ElementPlusResolver(), VantResolver()]
+      // 指定需要自动导入的组件目录
+      dirs: [
+        'src/components' // 主组件目录
+      ],
+      extensions: ['vue'],// 组件文件扩展名（默认：['.vue']）
+      deep: true,// 是否深度扫描子目录（默认：true）
+      resolvers: [ElementPlusResolver(), VantResolver()],
+      // 生成组件类型声明文件
+      dts: 'src/types/components.d.ts',
     })
   ],
   base: '/',
@@ -40,7 +51,7 @@ export default defineConfig({
             return 'images/[name]-[hash][extname]' // 图片：assets/images/xxx.png
           } else if (/\.(woff2?|eot|ttf|otf)$/.test(extname)) {
             return 'fonts/[name]-[hash][extname]' // 字体：assets/fonts/xxx.ttf
-          }else if (/\.(css|less|scss|sass|styl)$/.test(extname)) {
+          } else if (/\.(css|less|scss|sass|styl)$/.test(extname)) {
             return 'styles/[name]-[hash][extname]'
           }
           // 其他资源：assets/others/xxx.xxx

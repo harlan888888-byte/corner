@@ -53,15 +53,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { getStoreInfo } from '@/api/home/store'
-import StoreList from '@/components/business/StoreList.vue'
-import StoreItem from '@/components/page/home/StoreItem.vue'
-import SearchBar from '@/components/base/SearchBar.vue'
-import CityPicker from '@/components/business/CityPicker.vue'
-import EmptyState from '@/components/base/EmptyState.vue'
-import LoadingToast from '@/components/base/LoadingToast.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -78,21 +70,6 @@ const handleClickTitle = () => {
 const storeid = ref(route.query.storeid || '')
 const showEnterAnimation = ref(false)
 const isMounted = ref(false)
-
-// 监听路由变化，获取 storeid 参数
-watch(
-  () => route.query.storeid,
-  (newStoreid, oldStoreid) => {
-    // 如果组件已经挂载，并且之前没有 storeid，现在有了，说明是通过点击店铺列表项访问的，应该执行动画
-    if (isMounted.value && !oldStoreid && newStoreid) {
-      showEnterAnimation.value = true
-    } else {
-      showEnterAnimation.value = false
-    }
-    storeid.value = newStoreid || ''
-  },
-  { immediate: true }
-)
 
 // 组件挂载后设置 isMounted 为 true
 onMounted(() => {
