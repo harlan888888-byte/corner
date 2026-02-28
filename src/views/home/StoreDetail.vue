@@ -82,10 +82,14 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getStoreDetail } from '@/api/home/store'
 import defaultImgSrc from '@/assets/icons/miss_store.svg'
 import { useVanImagePreview } from '@/utils/vant-utils/useVanImagePreview'
 
+const route = useRoute()
+const router = useRouter()
 
 const images = ref([])
 
@@ -97,9 +101,6 @@ const {
   vanImageHandleDblClick,
   vanImageClose
 } = useVanImagePreview()
-
-const route = useRoute()
-const router = useRouter()
 
 // 店铺信息
 const storeInfo = ref({})

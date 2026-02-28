@@ -1,66 +1,75 @@
 <template>
   <!-- 城市选择器组件：热门城市 + 按字母分类 -->
-  <teleport to="body">
-    <div
-      class="city-picker-container"
-      :class="{ 'enter-active': isEnterActive, 'leave-active': isLeaveActive }"
-    >
-      <div ref="headerRef" class="city-picker-header">
-        <h2>选择城市</h2>
-        <button class="close-btn" @click="handleClose">取消</button>
-      </div>
+  <div v-if="true" style="display: none">
+    <teleport to="body">
+      <div
+        class="city-picker-container"
+        :class="{
+          'enter-active': isEnterActive,
+          'leave-active': isLeaveActive
+        }"
+      >
+        <div ref="headerRef" class="city-picker-header">
+          <h2>选择城市</h2>
+          <button class="close-btn" @click="handleClose">取消</button>
+        </div>
 
-      <div ref="contentRef" class="city-picker-content" @scroll="handleScroll">
-        <!-- 热门城市 -->
-        <div class="city-section">
-          <div class="city-section-title">热门</div>
-          <div class="city-list hot-city-list">
-            <div
-              v-for="city in hotCities"
-              :key="city.id"
-              class="city-item"
-              @click="selectCity(city)"
-            >
-              {{ city.name }}
+        <div
+          ref="contentRef"
+          class="city-picker-content"
+          @scroll="handleScroll"
+        >
+          <!-- 热门城市 -->
+          <div class="city-section">
+            <div class="city-section-title">热门</div>
+            <div class="city-list hot-city-list">
+              <div
+                v-for="city in hotCities"
+                :key="city.id"
+                class="city-item"
+                @click="selectCity(city)"
+              >
+                {{ city.name }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 按首字母分类的城市列表（按 A-Z 顺序） -->
+          <div
+            v-for="letter in indexLetters"
+            :key="letter"
+            class="city-section"
+            :id="`letter-${letter}`"
+          >
+            <div class="city-section-title">{{ letter }}</div>
+            <div class="city-list">
+              <div
+                v-for="city in groupedCities[letter]"
+                :key="city.id"
+                class="city-item"
+                @click="selectCity(city)"
+              >
+                {{ city.name }}
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- 按首字母分类的城市列表（按 A-Z 顺序） -->
-        <div
-          v-for="letter in indexLetters"
-          :key="letter"
-          class="city-section"
-          :id="`letter-${letter}`"
-        >
-          <div class="city-section-title">{{ letter }}</div>
-          <div class="city-list">
-            <div
-              v-for="city in groupedCities[letter]"
-              :key="city.id"
-              class="city-item"
-              @click="selectCity(city)"
-            >
-              {{ city.name }}
-            </div>
+        <!-- 侧边栏索引 -->
+        <div class="city-picker-index">
+          <div
+            v-for="letter in indexLetters"
+            :key="letter"
+            class="index-item"
+            :class="{ active: currentLetter === letter }"
+            @click="scrollToLetter(letter)"
+          >
+            {{ letter }}
           </div>
         </div>
       </div>
-
-      <!-- 侧边栏索引 -->
-      <div class="city-picker-index">
-        <div
-          v-for="letter in indexLetters"
-          :key="letter"
-          class="index-item"
-          :class="{ active: currentLetter === letter }"
-          @click="scrollToLetter(letter)"
-        >
-          {{ letter }}
-        </div>
-      </div>
-    </div>
-  </teleport>
+    </teleport>
+  </div>
 </template>
 
 <script setup>
@@ -109,14 +118,15 @@ const cities = ref([
 // 热门城市
 const hotCities = ref([
   { id: 0, name: '所有城市' },
-  { id: 1, name: '北京' },
-  { id: 2, name: '上海' },
-  { id: 3, name: '广州' },
-  { id: 4, name: '深圳' },
-  { id: 5, name: '杭州' },
-  { id: 6, name: '成都' },
-  { id: 7, name: '武汉' },
-  { id: 8, name: '西安' }
+  { id: 1, name: '佛山' },
+  { id: 2, name: '北京' },
+  { id: 3, name: '上海' },
+  { id: 4, name: '广州' },
+  { id: 5, name: '深圳' },
+  { id: 6, name: '杭州' },
+  { id: 7, name: '成都' },
+  { id: 8, name: '武汉' },
+  { id: 9, name: '西安' }
 ])
 
 // 按首字母分组城市

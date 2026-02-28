@@ -6,7 +6,6 @@ import '@/style/base.css'
 import '@/style/vant-common.css'
 import '@/style/vue-common.css'
 
-
 const app = createApp(App)
 
 app.use(pinia)

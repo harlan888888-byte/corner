@@ -101,8 +101,13 @@ const handleSwipeChange = (index) => {
   emit('update:activeTab', index)
   emit('tabChange', index)
   const tab = props.tabs[index]
-  if (tab && tab.path) {
-    router.push(tab.path)
+
+  // 防抖处理：避免频繁触发路由导航
+  if (tab && tab.path && route.path !== tab.path) {
+    // 使用 setTimeout 延迟路由导航，避免浏览器警告
+    setTimeout(() => {
+      router.push(tab.path)
+    }, 50)
   }
 
   // ✅ 核心修复：切换 Tab 时标记为已加载
