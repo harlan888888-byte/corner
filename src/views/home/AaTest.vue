@@ -5,7 +5,7 @@
     </div>
 
 
-    <ImagePreviewModal
+    <ImagePreview
       :images="images"
       :current-index="currentIndex"
       :is-modal-show="isModalShow"

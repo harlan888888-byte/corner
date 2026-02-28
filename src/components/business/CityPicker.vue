@@ -1,4 +1,5 @@
 <template>
+  <!-- 城市选择器组件：热门城市 + 按字母分类 -->
   <teleport to="body">
     <div
       class="city-picker-container"

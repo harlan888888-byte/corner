@@ -1,4 +1,5 @@
 <template>
+  <!-- 地图图标触发组件：点击打开高德地图查看地址 -->
   <div
     class="map-icon-trigger"
     @click="openAmapApp"

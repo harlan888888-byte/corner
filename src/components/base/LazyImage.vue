@@ -1,6 +1,6 @@
 <template>
+  <!-- 图片懒加载组件：占位图 + data-src存储真实地址 + 加载状态 -->
   <div class="lazy-image-container">
-    <!-- 图片懒加载：占位图 + data-src存储真实地址 + 加载状态 -->
     <div class="img-placeholder" v-if="!imgLoaded">
       <span class="loading-icon">
         <img src="@/assets/icons/loading.svg" alt="" />
@@ -21,6 +21,7 @@
 
 <script setup>
 import { defineProps, defineEmits, ref, onMounted, watch } from 'vue'
+import defaultImgSrc from '@/assets/icons/miss_store.svg'
 
 const props = defineProps({
   src: {
@@ -47,7 +48,7 @@ const lazyImg = ref(null)
 // 图片加载失败处理：显示兜底图
 const handleImgError = () => {
   if (lazyImg.value) {
-    lazyImg.value.src = placeholderImg
+    lazyImg.value.src = defaultImgSrc
     emit('error')
   }
 }

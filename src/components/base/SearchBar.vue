@@ -1,4 +1,5 @@
 <template>
+  <!-- 搜索栏组件：输入框 + 搜索按钮 + 清除按钮 + 搜索历史 -->
   <div ref="searchWrapperRef" class="custom-search-wrapper">
     <div class="custom-search-container">
       <input

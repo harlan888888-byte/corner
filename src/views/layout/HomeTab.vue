@@ -1,9 +1,10 @@
 <template>
+  <!-- 首页选项卡组件 -->
   <div class="home-tab-container">
     <div class="tab-top-item">
       <div class="top-item">
         <div class="title-item">
-          <h1 @click="handleClickTitle">街角</h1>
+          <h1>街角</h1>
         </div>
 
         <div class="city-selector">
@@ -53,18 +54,12 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getStoreInfo } from '@/api/home/store'
 
 const route = useRoute()
 const router = useRouter()
-
-// 处理点击标题事件
-const handleClickTitle = () => {
-  router.push({
-    path: '/aatest',
-    query: {}
-  })
-}
 
 // 店铺详情相关
 const storeid = ref(route.query.storeid || '')
@@ -213,6 +208,7 @@ const getStoreInfoList = async () => {
     btnLoading.value = false
   }
 }
+
 </script>
 
 <style lang="scss" scoped>

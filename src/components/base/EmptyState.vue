@@ -1,4 +1,5 @@
 <template>
+  <!-- 空状态组件：图片 + 文本 -->
   <div class="empty-state">
     <img :src="imgSrc || defaultImg" :alt="altText" class="empty-state-img" />
     <p class="empty-state-text">{{ text }}</p>

@@ -1,4 +1,5 @@
 <template>
+  <!-- 店铺列表组件：滚动加载，支持自定义内容插槽 -->
   <div class="store-list-container">
     <ul ref="storeListRef" class="store-list">
       <slot v-for="item in storeList" :key="item.id" :item="item">

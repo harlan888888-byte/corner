@@ -12,11 +12,9 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     CityPicker: typeof import('./../components/business/CityPicker.vue')['default']
-    copy: typeof import('./../components/base/ImagePreview copy.vue')['default']
     EmptyState: typeof import('./../components/base/EmptyState.vue')['default']
+    ImageCard: typeof import('./../components/business/ImageCard.vue')['default']
     ImagePreview: typeof import('./../components/base/ImagePreview.vue')['default']
-    'ImagePreview copy': typeof import('./../components/base/ImagePreview copy.vue')['default']
-    ImagePreviewModal: typeof import('./../components/base/ImagePreviewModal.vue')['default']
     LazyImage: typeof import('./../components/base/LazyImage.vue')['default']
     LoadingToast: typeof import('./../components/base/LoadingToast.vue')['default']
     LoadMore: typeof import('./../components/base/LoadMore.vue')['default']
@@ -27,6 +25,7 @@ declare module 'vue' {
     StoreList: typeof import('./../components/business/StoreList.vue')['default']
     SwipeTabs: typeof import('./../components/base/SwipeTabs.vue')['default']
     TargetMap: typeof import('./../components/base/TargetMap.vue')['default']
+    VanImagePreview: typeof import('vant/es')['ImagePreview']
     VanLoading: typeof import('vant/es')['Loading']
     VanSwipe: typeof import('vant/es')['Swipe']
     VanSwipeItem: typeof import('vant/es')['SwipeItem']

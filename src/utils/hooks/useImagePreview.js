@@ -41,6 +41,7 @@ export function useImagePreview() {
 
     // 设置当前预览图片的索引
     currentIndex.value = idx
+
     // 重置并显示预览弹窗
     isModalShow.value = false
     // 强制DOM更新
@@ -72,5 +73,6 @@ export function useImagePreview() {
     handleImgDblClick,
     openPreview,
     closePreview
+
   }
 }

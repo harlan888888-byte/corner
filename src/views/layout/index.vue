@@ -1,4 +1,5 @@
 <template>
+  <!-- 布局容器：包含选项卡和路由视图 -->
   <div class="layout-container">
     <SwipeTabs
       :tabs="tabs"
@@ -10,7 +11,7 @@
     <van-tabbar
       ref="tabbarRef"
       v-model="activeTab"
-      active-color="#ee0a24"
+      active-color="#b44bc6"
       inactive-color="#000"
       @change="handleTabbarChange"
     >
@@ -38,9 +39,6 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, defineAsyncComponent } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import SwipeTabs from '@/components/base/SwipeTabs.vue'
 const HomeTab = defineAsyncComponent(() => import('./HomeTab.vue'))
 const FootPrintTab = defineAsyncComponent(() => import('./FootPrintTab.vue'))
 const PlanTab = defineAsyncComponent(() => import('./PlanTab.vue'))

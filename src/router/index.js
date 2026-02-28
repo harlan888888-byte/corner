@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// import { useUserStore } from '@/stores'
 
 // createRouter 创建路由实例
 // 配置 history 模式

@@ -1,4 +1,5 @@
 <template>
+  <!-- 加载更多组件：加载中文本 + 无更多数据文本 -->
   <div class="load-more">
     <span v-if="loading">{{ loadingText }}</span>
     <span v-else-if="!hasMore">{{ noMoreText }}</span>

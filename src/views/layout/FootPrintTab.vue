@@ -132,13 +132,14 @@ onMounted(() => {
     footprintList.value = rawFootprintList
     // 标记加载完成，触发列表渲染
     isLoaded.value = true
-  }, 1000) // 2000毫秒 = 2秒
+  }, 1000)
 })
 </script>
 
 <style scoped>
 .foot-print-tab-container {
-  padding-bottom: 20px;
+  min-height: 100vh;
+  position: relative;
 }
 
 .tab-top-item {

@@ -1,4 +1,5 @@
 <template>
+  <!-- 加载提示组件：图标 + 文本 -->
   <div class="loading-wrapper">
     <div class="loading-container">
       <van-loading
@@ -58,14 +59,20 @@ const props = defineProps({
   z-index: 9999;
 }
 
+.van-loading {
+  position: relative !important;
+  top: 0;
+  left: 0;
+  transform: none
+}
+
 .loading-container {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  max-width: 150px;
+  max-width: 200px;
   min-height: 120px;
   background-color: rgba(0, 0, 0, 0.7);
   border-radius: 10px;
