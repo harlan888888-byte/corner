@@ -1,67 +1,78 @@
 <template>
-  <div class="img-preview-container">
-    <!-- 图片卡片：v-for 渲染网格，无需手动创建DOM -->
-    <div class="moment-card">
-      <div class="moment-text">图片预览</div>
-      <div class="img-grid">
-        <img
-          class="grid-img"
-          v-for="(src, idx) in images"
-          :key="idx"
-          :src="src"
-          @click="handleImgClick(idx)"
-          @dblclick="handleImgDblClick(idx)"
-        />
-      </div>
-    </div>
-
-    <!-- 预览弹窗：修正 class 绑定，补充 sliderWrapper 的 transform 绑定 -->
-    <div class="preview-modal" :class="{ show: isModalShow }">
+  <!-- 预览弹窗组件 -->
+  <Teleport to="body">
+    <div
+      ref="previewModal"
+      class="preview-modal"
+      :class="{ show: localIsModalShow }"
+    >
+      <!-- 滑块容器：用于水平滑动切换图片 -->
       <div
-        class="slider-wrapper"
         ref="sliderWrapper"
+        class="slider-wrapper"
+        :style="{ transform: getSliderTransform }"
         @touchstart="handleTouchStart"
         @touchmove="handleTouchMove"
         @touchend="handleTouchEnd"
-        :style="{ transform: getSliderTransform }"
       >
-        <div class="slide-item" v-for="(src, idx) in images" :key="idx">
+        <!-- 图片幻灯片：v-for 渲染所有预览图片 -->
+        <div v-for="(src, idx) in images" :key="idx" class="slide-item">
+          <!-- 图片缩放容器：处理图片的缩放和位移 -->
           <div
-            class="img-scale-wrap"
             ref="imgScaleWraps"
+            class="img-scale-wrap"
             :style="{ transform: getWrapTransform(idx) }"
           >
+            <!-- 预览图片 -->
             <img class="preview-img" :src="src" @load="handleImgLoad(idx)" />
           </div>
         </div>
       </div>
-      <!-- 正确访问 state.currentIndex -->
-      <div class="page-indicator" v-if="isModalShow">
+
+      <!-- 页码指示器：显示当前图片索引和总数量 -->
+      <div class="page-indicator">
         {{ state.currentIndex + 1 }} / {{ images.length }}
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>
 // 导入Vue 3组合式API所需的核心方法
-import { ref, reactive, computed, onMounted } from 'vue'
+import { es } from 'element-plus/es/locales.mjs'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 
-// 1. 响应式数据定义 - 存储图片列表，ref用于简单类型/数组的响应式绑定
-const images = ref([
-  'https://picsum.photos/id/237/600/600',
-  'https://fe.ntotl.cn/img/rotation/tool_20251231/ny.png',
-  'https://picsum.photos/id/103/600/600',
-  'https://picsum.photos/id/104/300/300',
-  'https://picsum.photos/id/112/600/600',
-  'https://picsum.photos/id/119/600/600',
-  'https://picsum.photos/id/122/600/600',
-  'https://picsum.photos/id/125/200/200',
-  'https://picsum.photos/id/126/200/200'
-])
+// 接收父组件传入的属性
+const props = defineProps({
+  images: {
+    type: Array,
+    required: true,
+    default: () => []
+  },
+  currentIndex: {
+    type: Number,
+    default: 0
+  },
+  isModalShow: {
+    type: Boolean,
+    default: false
+  }
+})
 
-// 弹窗显示/隐藏状态，响应式绑定
-const isModalShow = ref(false)
+// 本地显示状态
+const localIsModalShow = ref(false)
+
+const emit = defineEmits(['closePreview'])
+
+// 监听父组件传入的isModalShow变化
+watch(
+  () => props.isModalShow,
+  (newValue) => {
+    localIsModalShow.value = newValue
+  },
+  { immediate: true }
+)
+
 // 滑块容器DOM引用，用于后续手动操作滑块样式
 const sliderWrapper = ref(null)
 // 图片缩放容器DOM引用数组，存储所有预览图片的缩放容器DOM元素
@@ -73,12 +84,12 @@ const state = reactive({
   BASE_SCALE: 1, // 默认缩放比例（原始大小）
   MAX_SCALE: 2.2, // 最大缩放比例
   SCALE_SENSITIVITY: 0.12, // 双指缩放的灵敏度
-  SLIDE_THRESHOLD: 70, // 滑动切换图片的阈值（像素）
+  SLIDE_THRESHOLD: 30, // 滑动切换图片的阈值（像素）
   CLICK_MAX_MOVE: 10, // 判断是否为点击的最大移动距离（超过则视为滑动）
   DOUBLE_TAP_DELAY: 300, // 双击判断的延迟时间（毫秒）
 
   // 运行时动态状态 - 交互过程中实时变化的参数
-  currentIndex: 0, // 当前预览图片的索引
+  currentIndex: props.currentIndex, // 当前预览图片的索引
   currentScale: 1, // 当前图片的缩放比例
   offsetX: 0, // 当前图片的水平偏移量（像素）
   offsetY: 0, // 当前图片的垂直偏移量（像素）
@@ -101,6 +112,36 @@ const state = reactive({
   this_offsetX: 0 // 图片贴边时的水平偏移量备份（用于恢复图片位置）
 })
 
+// 监听父组件传入的currentIndex变化
+watch(
+  () => props.currentIndex,
+  (newIndex) => {
+    // 禁用滑块过渡效果，避免从之前索引动画到当前索引
+    if (sliderWrapper.value) {
+      sliderWrapper.value.style.transition = 'none'
+    }
+
+    // 更新当前索引
+    state.currentIndex = newIndex
+    state.currentScale = state.BASE_SCALE
+    state.offsetX = 0
+    state.offsetY = 0
+
+    // 强制更新滑块位置
+    if (sliderWrapper.value) {
+      sliderWrapper.value.style.transform = `translateX(${-state.currentIndex * 100}vw)`
+    }
+
+    // 短暂延迟后恢复过渡效果，确保后续操作有动画
+    setTimeout(() => {
+      if (sliderWrapper.value) {
+        sliderWrapper.value.style.transition =
+          'transform 0.32s cubic-bezier(0.25, 0.8, 0.25, 1)'
+      }
+    }, 100)
+  }
+)
+
 // 计算属性 - 动态计算滑块的transform样式，实现滑块的水平平移
 // 基于当前图片索引，计算滑块需要向左平移的距离（vw单位，适配不同屏幕）
 const getSliderTransform = computed(() => {
@@ -117,75 +158,6 @@ function getWrapTransform(idx) {
   }
   // 当前预览的图片，返回实时的偏移量和缩放比例样式
   return `translate(${state.offsetX}px, ${state.offsetY}px) scale(${state.currentScale})`
-}
-
-// 2. 核心业务方法 - 处理图片预览的核心功能逻辑
-
-// 图片单击事件处理（防双击冲突）
-// 参数idx：被点击图片的索引
-const handleImgClick = (idx) => {
-  // 延迟执行，等待双击事件判断（避免单击和双击冲突）
-  setTimeout(() => {
-    // 若不是双击操作，则打开预览弹窗
-    if (!state.isDoubleTap) {
-      openPreview(idx)
-    }
-  }, 200)
-}
-
-// 图片双击事件处理
-// 参数idx：被双击图片的索引
-const handleImgDblClick = (idx) => {
-  // 标记为双击操作，避免单击事件触发
-  state.isDoubleTap = true
-  // 打开预览弹窗（双击也会进入预览，同时后续会触发双击缩放）
-  openPreview(idx)
-}
-
-// 打开图片预览弹窗
-// 参数idx：要预览的图片索引
-const openPreview = (idx) => {
-  // 重置当前预览状态
-  state.currentIndex = idx
-  state.currentScale = state.BASE_SCALE
-  state.offsetX = 0
-  state.offsetY = 0
-  // 获取当前窗口尺寸（用于后续计算偏移和缩放）
-  state.containerW = window.innerWidth
-  state.containerH = window.innerHeight
-
-  // 显示预览弹窗
-  isModalShow.value = true
-  // 隐藏页面滚动条，避免预览时页面滚动
-  document.body.style.overflow = 'hidden'
-
-  // 重置滑块的过渡效果（平滑切换）
-  if (sliderWrapper.value) {
-    sliderWrapper.value.style.transition =
-      'transform 0.32s cubic-bezier(0.25, 0.8, 0.25, 1)'
-  }
-}
-
-// 关闭图片预览弹窗
-const closePreview = () => {
-  // 获取当前预览图片的缩放容器DOM
-  const wrap = imgScaleWraps.value[state.currentIndex]
-  // 设置图片的过渡效果（平滑复位）
-  if (wrap) {
-    wrap.style.transition = 'transform 0.15s ease-in-out'
-  }
-
-  // 重置图片缩放和偏移状态
-  state.currentScale = state.BASE_SCALE
-  state.offsetX = 0
-  state.offsetY = 0
-
-  // 延迟隐藏弹窗，等待过渡效果完成
-  setTimeout(() => {
-    isModalShow.value = false
-    // 恢复页面滚动条
-    document.body.style.overflow = ''
-  }, 150)
 }
 
 // 跳转到指定索引的图片
@@ -233,7 +205,7 @@ const calcContainerBasedBounds = () => {
       bottomHit: false // 是否贴下边界
     }
   }
-  
+
   // 计算缩放后的图片尺寸
   const scaledW = state.containerW * state.currentScale
   const scaledH = state.containerH * state.currentScale
@@ -315,6 +287,38 @@ const handleDoubleTap = (clientX, clientY) => {
 
   // 设置图片过渡效果（平滑缩放）
   wrap.style.transition = 'transform 0.2s ease'
+}
+
+// 关闭图片预览弹窗
+const closePreview = () => {
+  // 获取当前预览图片的缩放容器DOM
+  const wrap = imgScaleWraps.value[state.currentIndex]
+  // 设置图片的过渡效果（平滑复位）
+  if (wrap) {
+    wrap.style.transition = 'transform 0.15s ease-in-out'
+  }
+
+  // 延迟隐藏弹窗，等待过渡效果完成
+  if (state.currentScale > state.BASE_SCALE) {
+    // 重置图片缩放和偏移状态
+    state.currentScale = state.BASE_SCALE
+    state.offsetX = 0
+    state.offsetY = 0
+    setTimeout(() => {
+      // 直接更新本地显示状态
+      localIsModalShow.value = false
+
+      // 恢复页面滚动条
+      document.body.style.overflow = ''
+      emit('closePreview')
+    }, 120)
+    
+  } else {
+    localIsModalShow.value = false
+    // 恢复页面滚动条
+    document.body.style.overflow = ''
+    emit('closePreview')
+  }
 }
 
 // 3. 触摸事件处理 - 处理移动端的触摸交互（单指滑动、双指缩放）
@@ -462,11 +466,20 @@ const handleTouchMove = (e) => {
           state.this_offsetX = state.offsetX
           state.img_state = 'right'
           state.img_lock = true
+          // 重置触摸起点和当前点，避免后续计算出现跳跃
+          state.startX = currX
+          state.lastX = currX
           sliderWrapper.value.style.transform = `translateX(${translateXInVw}vw)`
         } else if (bounds.rightHit && deltaX > 0) {
           state.this_offsetX = state.offsetX
           state.img_state = 'left'
           state.img_lock = true
+          // 重置触摸起点和当前点，避免后续计算出现跳跃
+          state.startX = currX
+          state.lastX = currX
+          sliderWrapper.value.style.transform = `translateX(${translateXInVw}vw)`
+        } else {
+          // 未达到临界状态，正常更新滑块位置
           sliderWrapper.value.style.transform = `translateX(${translateXInVw}vw)`
         }
       } else if (state.img_state === 'right') {
@@ -474,6 +487,9 @@ const handleTouchMove = (e) => {
         if (state.wrapperBaseX > translateXInVw) {
           sliderWrapper.value.style.transform = `translateX(${translateXInVw}vw)`
         } else {
+          // 重置触摸起点和当前点
+          state.startX = currX
+          state.lastX = currX
           sliderWrapper.value.style.transform = `translateX(${translateXInVw}vw)`
           state.img_lock = false
           state.img_state = 'center'
@@ -483,6 +499,9 @@ const handleTouchMove = (e) => {
         if (state.wrapperBaseX < translateXInVw) {
           sliderWrapper.value.style.transform = `translateX(${translateXInVw}vw)`
         } else {
+          // 重置触摸起点和当前点
+          state.startX = currX
+          state.lastX = currX
           sliderWrapper.value.style.transform = `translateX(${translateXInVw}vw)`
           state.img_lock = false
           state.img_state = 'center'
@@ -564,13 +583,13 @@ const handleTouchEnd = (e) => {
       (bounds.leftHit && totalDx < 0) || (bounds.rightHit && totalDx > 0)
 
     // 满足切换阈值：跳转到相邻图片
-    if (isEdgeSlide && Math.abs(totalDx) >= state.SLIDE_THRESHOLD) {
+    if (isEdgeSlide && Math.abs(totalDx) >= 100) {
       // 向左滑动，跳转到上一张
       if (totalDx > 0 && state.currentIndex > 0) {
         jumpToSlide(state.currentIndex - 1)
       }
       // 向右滑动，跳转到下一张
-      else if (totalDx < 0 && state.currentIndex < images.value.length - 1) {
+      else if (totalDx < 0 && state.currentIndex < props.images.length - 1) {
         jumpToSlide(state.currentIndex + 1)
       }
       // 无法跳转（已到首尾），复位滑块和图片
@@ -601,7 +620,7 @@ const handleTouchEnd = (e) => {
       jumpToSlide(state.currentIndex - 1)
     }
     // 向右滑动，跳转到下一张
-    else if (totalDx < 0 && state.currentIndex < images.value.length - 1) {
+    else if (totalDx < 0 && state.currentIndex < props.images.length - 1) {
       jumpToSlide(state.currentIndex + 1)
     }
     // 无法跳转（已到首尾），复位滑块
@@ -632,38 +651,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 保留原有样式，移除全局*和body（移到全局样式更合适，此处保留以兼容功能） */
-.moment-card {
-  max-width: 340px;
-  background: #fff;
-  border-radius: 10px;
-  padding: 12px;
-  margin: 20px auto;
-}
-
-.moment-text {
-  font-size: 15px;
-  color: #333;
-  line-height: 1.5;
-  margin-bottom: 10px;
-  text-align: center;
-}
-
-.img-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  width: 100%;
-}
-
-.grid-img {
-  width: 100%;
-  aspect-ratio: 1/1;
-  object-fit: cover;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
 .preview-modal {
   position: fixed;
   top: 0;
@@ -733,20 +720,6 @@ onMounted(() => {
   border-radius: 16px;
   z-index: 10000;
   opacity: 1;
-  transition: opacity 0.3s ease-in-out;
-}
-
-/* 全局样式建议移到 App.vue 或单独的 global.css */
-:deep(*) {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-:deep(body) {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f5f5f5;
-  padding: 15px;
+  transition: opacity 0.1s ease-in-out;
 }
 </style>

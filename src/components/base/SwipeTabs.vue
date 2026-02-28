@@ -1,4 +1,5 @@
 <template>
+  <!-- 滑动切换组件：选项卡 + 内容区域 -->
   <div class="swipe-tabs-container">
     <div class="main-content">
       <!-- 使用 van-swipe 实现左右滑动切换 -->
@@ -8,7 +9,12 @@
         :loop="false"
         :show-indicators="false"
         @change="handleSwipeChange"
+        :duration="300"
         class="page-swipe"
+        :auto-play="false"
+        :stop-propagation="true"
+        :touch-move-prevent-default="false"
+        :touch-angle="45"
       >
         <van-swipe-item
           v-for="(tab, index) in tabs"
@@ -20,12 +26,10 @@
             class="page-container"
             @scroll="saveScrollPosition(index, $event)"
           >
-            <!-- 懒加载核心：只渲染当前激活/已加载的 Tab 组件 -->
             <template v-if="index === activeTab || loadedTabs.includes(index)">
-              <!-- 可选：加 loading 占位，优化首次加载体验 -->
-
-              <!-- ✅ 去掉错误的 @mounted，改用 ref 或切换时标记 -->
-              <component :is="tab.component" />
+              <keep-alive>
+                <component :is="tab.component" />
+              </keep-alive>
             </template>
           </div>
         </van-swipe-item>
@@ -62,6 +66,7 @@ const activeTab = ref(props.activeTab)
 const pageRefs = ref([])
 const scrollPositions = ref([])
 const loadedTabs = ref([])
+const trackElement = ref(null)
 
 // 初始化滚动位置数组
 const initScrollPositions = () => {
@@ -140,6 +145,9 @@ onMounted(async () => {
   // 等待DOM更新完成
   await nextTick()
 
+  // 获取 track 元素引用
+  trackElement.value = document.querySelector('.page-swipe .van-swipe__track')
+
   // 初始化时同步路由与 tab
   syncRouteWithTab()
 
@@ -171,6 +179,7 @@ onMounted(async () => {
   overflow: hidden;
 }
 
+/* 核心优化：硬件加速 + 宽松的触摸行为 */
 .page-swipe {
   height: 100%;
   overflow: hidden;
@@ -191,6 +200,16 @@ onMounted(async () => {
   z-index: 1;
   contain: strict;
   touch-action: pan-y;
+}
+
+/* 优化过渡效果，确保动画流畅 */
+.custom-swipe :deep(.van-swipe__track) {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* 优化重绘性能 */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* 隐藏滚动条但保持滚动功能 */

@@ -1,22 +1,44 @@
 <template>
-  <div class="plan-tab-container">
-    <h1>我的-开发中...</h1>
+  <div class="swiper-container">
+
   </div>
 </template>
 
 <script setup>
-// 我的组件逻辑
+import { ref } from 'vue'
+
+
 </script>
 
 <style scoped>
-.mine-container {
-  padding: 20px;
-  text-align: center;
+.swiper-container {
+  width: 100%;
+  height: 300px;
+  margin: 20px 0;
 }
 
-h1 {
+.mySwiper {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
   font-size: 24px;
-  margin-bottom: 20px;
-  text-align: center;
+  font-weight: bold;
+  color: #333;
+}
+
+.swiper-slide:nth-child(odd) {
+  background-color: #e3f2fd;
+}
+
+.swiper-slide:nth-child(even) {
+  background-color: #f3e5f5;
 }
 </style>

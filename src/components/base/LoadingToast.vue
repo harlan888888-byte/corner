@@ -1,14 +1,16 @@
 <template>
+  <!-- 加载提示组件：图标 + 文本 -->
   <div class="loading-wrapper">
     <div class="loading-container">
       <van-loading
+        vertical
         :type="type"
         :color="color"
-        :size="size"
         :text-size="textSize"
-        vertical
-      />
-      <p v-if="text" class="loading-text">{{ text }}</p>
+        :size="size"
+      >
+        {{ text || '加载中...' }}
+      </van-loading>
     </div>
   </div>
 </template>
@@ -23,7 +25,7 @@ const props = defineProps({
   },
   textSize: {
     type: String,
-    default: '16px'
+    default: '18px'
   },
   // 加载图标类型：spinner | circular
   type: {
@@ -57,22 +59,37 @@ const props = defineProps({
   z-index: 9999;
 }
 
+.van-loading {
+  position: relative !important;
+  top: 0;
+  left: 0;
+  transform: none
+}
+
 .loading-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 120px;
-  height: 120px;
+  max-width: 200px;
+  min-height: 120px;
   background-color: rgba(0, 0, 0, 0.7);
   border-radius: 10px;
   padding: 20px;
   gap: 15px;
+  box-sizing: border-box;
 }
 
-.loading-text {
+:deep(.van-loading) {
   color: #ffffff;
   margin: 0;
   text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  max-width: 100%;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 </style>

@@ -5,6 +5,8 @@ import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import pluginPrettier from 'eslint-plugin-prettier';
 import globals from 'globals';
+import { defineConfig } from 'eslint'
+import autoImport from 'unplugin-auto-import/eslint'
 
 // 调试：打印解析器是否存在
 console.log('eslint-plugin-vue 插件是否加载成功：', !!pluginVue);
@@ -85,6 +87,10 @@ const prettierDefaultRules = {
 
 // 最终导出配置
 export default [
+  // 配置 unplugin-auto-import/eslint 插件，识别自动导入的变量
+  autoImport({
+    imports: ['vue', 'vue-router', 'pinia'],
+  }),
   // 1. 忽略无需检测的文件/目录
   {
     ignores: [

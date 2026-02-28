@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// import { useUserStore } from '@/stores'
 
 // createRouter 创建路由实例
 // 配置 history 模式
@@ -31,20 +30,25 @@ const router = createRouter({
         {
           path: '/mine',
           component: () => import('@/views/layout/MineTab.vue')
+        },
+        {
+          path: '/store-detail/:storeid',
+          name: 'StoreDetail',
+          component: () => import('@/views/home/StoreDetail.vue')
+        },
+        {
+          path: '/aatest',
+          name: 'AATest',
+          component: () => import('@/views/home/AaTest.vue'),
+          children: [
+            {
+              path: 'indexpage',
+              name: 'IndexPage',
+              component: () => import('@/views/home/IndexPage.vue')
+            }
+          ]
         }
       ]
-    },
-    {
-      path: '/footprint',
-      component: () => import('@/views/footprint/index.vue')
-    },
-    {
-      path: '/plan',
-      component: () => import('@/views/plan/index.vue')
-    },
-    {
-      path: '/mine',
-      component: () => import('@/views/mine/index.vue')
     }
   ]
 })

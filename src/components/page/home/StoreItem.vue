@@ -1,9 +1,10 @@
 <template>
-  <li class="store-item-box">
+  <!-- 店铺列表项组件 -->
+  <li class="store-item-box" @click="goToDetail">
     <div class="store-item">
       <div class="left-item">
         <div class="store-img">
-          <LazyImage :src="item.store_img" alt="店铺" />
+          <LazyImage :src="item.store_img || defaultImgSrc" alt="店铺" />
         </div>
       </div>
 
@@ -27,8 +28,15 @@
           <span>{{ item.title }}</span>
         </div>
         <div class="store-address text-item">
-          <div class="target-map">
-            <TargetMap :address="item.name + item.address">
+          <div class="target-map" @click.stop>
+            <TargetMap
+              :address="
+                (item.province || '') +
+                (item.city || '') +
+                (item.name || '') +
+                (item.address || '')
+              "
+            >
               <img class="map-icon" src="@/assets/icons/map.svg" alt="位置" />
             </TargetMap>
           </div>
@@ -41,9 +49,7 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue'
-import TargetMap from '@/components/base/TargetMap.vue'
-import LazyImage from '@/components/base/LazyImage.vue'
+import defaultImgSrc from '@/assets/icons/miss_store.svg'
 
 const props = defineProps({
   item: {
@@ -51,6 +57,15 @@ const props = defineProps({
     required: true
   }
 })
+
+const router = useRouter()
+
+// 跳转到店铺详情页面
+const goToDetail = () => {
+  router.push({
+    path: `/store-detail/${props.item.id}`
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -126,15 +141,5 @@ $item-border-radius: 5px;
 .map-icon {
   width: 25px;
   height: 25px;
-}
-
-// 加载动画
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>
