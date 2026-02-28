@@ -19,7 +19,7 @@
           class="city-picker-content"
           @scroll="handleScroll"
         >
-          <!-- 热门城市  -->
+          <!-- 热门城市 -->
           <div class="city-section">
             <div class="city-section-title">热门</div>
             <div class="city-list hot-city-list">
