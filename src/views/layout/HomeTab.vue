@@ -1,4 +1,5 @@
 <template>
+  <!-- 首页选项卡组件 -->
   <div class="home-tab-container">
     <div class="tab-top-item">
       <div class="top-item">
@@ -277,13 +278,18 @@ onUnmounted(() => {
 .home-tab-container {
   background-color: #f6f6f6;
   min-height: 100vh;
+  min-height: 100vh;
 }
 
 .tab-top-item {
   position: sticky;
   top: 0;
   left: 0;
+  position: sticky;
+  top: 0;
+  left: 0;
   width: 100%;
+  background: linear-gradient(to right, #673ab7, #d154ff);
   background: linear-gradient(to right, #673ab7, #d154ff);
   padding: 10px;
   margin-bottom: 5px;
@@ -308,6 +314,10 @@ onUnmounted(() => {
     border-radius: 4px;
   }
 
+  h1 {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
   h1 {
     font-size: 24px;
     margin-bottom: 8px;
