@@ -6,6 +6,7 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { VantResolver } from '@vant/auto-import-resolver';
 import path from 'path'
+import viteCompression from 'vite-plugin-compression'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -27,6 +28,13 @@ export default defineConfig({
       resolvers: [ElementPlusResolver(), VantResolver()],
       // 生成组件类型声明文件
       dts: 'src/types/components.d.ts',
+    }),
+    viteCompression({
+      algorithm: 'gzip',
+      threshold: 10240, // 大于 10KB 的文件才进行压缩
+      deleteOriginFile: false, // 不删除源文件
+      compress: true, // 启用压缩
+      verbose: true // 显示压缩信息
     }),
   ],
   base: '/',
@@ -52,7 +60,7 @@ export default defineConfig({
           } else if (/\.(woff2?|eot|ttf|otf)$/.test(extname)) {
             return 'fonts/[name]-[hash][extname]' // 字体：assets/fonts/xxx.ttf
           } else if (/\.(css|less|scss|sass|styl)$/.test(extname)) {
-            return 'styles/[name]-[hash][extname]'
+            return 'style/[name]-[hash][extname]'
           }
           // 其他资源：assets/others/xxx.xxx
           return 'others/[name]-[hash][extname]'
