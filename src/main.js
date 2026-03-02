@@ -2,9 +2,13 @@ import { createApp } from 'vue'
 import App from '@/App.vue'
 import router from '@/router'
 import pinia from '@/stores'
+import { performanceMonitor } from '@/performance'
 import '@/style/base.css'
 import '@/style/vant-common.css'
 import '@/style/vue-common.css'
+
+// 初始化性能监控
+performanceMonitor.init()
 
 const app = createApp(App)
 

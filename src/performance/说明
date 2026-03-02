@@ -1,0 +1,19 @@
+### 各模块功能说明： 
+index.js 导出入口 ，统一导出 performance 模块下的所有功能。
+
+1. monitors/
+- page.js ：页面加载性能监控（FCP、LCP等）
+- network.js ：网络请求性能监控（API响应时间等）
+- memory.js ：内存使用监控（内存泄漏检测） 
+
+2. tests/
+- benchmark.js ：代码执行速度基准测试
+- loadTest.js ：页面加载时间测试 
+
+3. optimizers/
+- image.js ：图片压缩和优化工具
+- bundle.js ：打包体积优化工具 
+
+4. reporting/
+- console.js ：控制台性能报告
+- dashboard.js ：可视化性能仪表盘

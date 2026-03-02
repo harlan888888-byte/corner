@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { performanceMonitor } from '@/performance'
 
 // createRouter 创建路由实例
 // 配置 history 模式
@@ -51,6 +52,35 @@ const router = createRouter({
       ]
     }
   ]
+})
+
+// 页面性能监控导航守卫
+// 只在初始加载时监控性能，路由切换时不监控
+let isInitialLoad = true
+
+router.beforeEach((to) => {
+  if (isInitialLoad) {
+    // 获取页面名称
+    const pageName = to.name || to.path.replace(/\//g, '-').slice(1) || 'index'
+    // 开始页面性能监控
+    performanceMonitor.startPageMonitor(pageName)
+  }
+  return true
+})
+
+// 页面加载完成后结束监控
+router.afterEach((to) => {
+  if (isInitialLoad) {
+    // 获取页面名称
+    const pageName = to.name || to.path.replace(/\//g, '-').slice(1) || 'index'
+
+    // 等待页面完全加载
+    setTimeout(() => {
+      performanceMonitor.endPageMonitor(pageName)
+      // 标记初始加载已完成
+      isInitialLoad = false
+    }, 2000) // 给页面一点时间完成渲染
+  }
 })
 
 // 登录访问拦截 => 默认是直接放行的

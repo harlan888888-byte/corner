@@ -11,7 +11,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    BackButtonTest: typeof import('./../components/base/BackButtonTest.vue')['default']
     CityPicker: typeof import('./../components/business/CityPicker.vue')['default']
     DialogStackExample: typeof import('./../components/base/DialogStackExample.vue')['default']
     EmptyState: typeof import('./../components/base/EmptyState.vue')['default']
@@ -27,10 +26,8 @@ declare module 'vue' {
     StoreList: typeof import('./../components/business/StoreList.vue')['default']
     SwipeTabs: typeof import('./../components/base/SwipeTabs.vue')['default']
     TargetMap: typeof import('./../components/base/TargetMap.vue')['default']
-    VanButton: typeof import('vant/es')['Button']
     VanImagePreview: typeof import('vant/es')['ImagePreview']
     VanLoading: typeof import('vant/es')['Loading']
-    VanPopup: typeof import('vant/es')['Popup']
     VanSwipe: typeof import('vant/es')['Swipe']
     VanSwipeItem: typeof import('vant/es')['SwipeItem']
     VanTabbar: typeof import('vant/es')['Tabbar']
