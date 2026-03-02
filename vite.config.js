@@ -68,7 +68,18 @@ export default defineConfig({
         // 2. 配置 JS 分块（对应 Webpack 的 chunkFileNames）
         chunkFileNames: 'js/[name]-[hash].js', // 异步 chunk：assets/js/xxx.js
         // 3. 配置入口 JS（对应 Webpack 的 entryFileNames）
-        entryFileNames: 'js/[name]-[hash].js' // 其他入口 JS：assets/js/xxx.js
+        entryFileNames: 'js/[name]-[hash].js', // 其他入口 JS：assets/js/xxx.js
+        // 4. 代码分割配置
+        manualChunks: {
+          // 第三方库
+          vendor: ['vue', 'vue-router', 'pinia'],
+          // 工具库
+          utils: ['axios'],
+          // 组件库
+          ui: ['element-plus', 'vant'],
+          // 轮播库
+          swiper: ['swiper']
+        }
       }
     }
   },
