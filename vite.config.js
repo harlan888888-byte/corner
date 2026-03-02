@@ -27,7 +27,7 @@ export default defineConfig({
       resolvers: [ElementPlusResolver(), VantResolver()],
       // 生成组件类型声明文件
       dts: 'src/types/components.d.ts',
-    })
+    }),
   ],
   base: '/',
   resolve: {
@@ -60,7 +60,7 @@ export default defineConfig({
         // 2. 配置 JS 分块（对应 Webpack 的 chunkFileNames）
         chunkFileNames: 'js/[name]-[hash].js', // 异步 chunk：assets/js/xxx.js
         // 3. 配置入口 JS（对应 Webpack 的 entryFileNames）
-        entryFileNames: 'js/[name]-[hash].js' // 入口 JS：assets/js/xxx.js
+        entryFileNames: 'js/[name]-[hash].js' // 其他入口 JS：assets/js/xxx.js
       }
     }
   },
