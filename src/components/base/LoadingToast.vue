@@ -43,6 +43,8 @@ const props = defineProps({
     default: '40px'
   }
 })
+
+
 </script>
 
 <style scoped>
@@ -63,7 +65,7 @@ const props = defineProps({
   position: relative !important;
   top: 0;
   left: 0;
-  transform: none
+  transform: none;
 }
 
 .loading-container {

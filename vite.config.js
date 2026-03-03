@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'  // 只保留 Vite 的 defineConfig
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import AutoImport from 'unplugin-auto-import/vite'  // Vite 插件
+import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { VantResolver } from '@vant/auto-import-resolver';
@@ -29,6 +29,7 @@ export default defineConfig({
       // 生成组件类型声明文件
       dts: 'src/types/components.d.ts',
     }),
+    // 压缩gzip插件配置
     viteCompression({
       algorithm: 'gzip',
       threshold: 10240, // 大于 10KB 的文件才进行压缩

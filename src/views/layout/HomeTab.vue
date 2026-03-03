@@ -27,6 +27,7 @@
     </div>
 
     <LoadingToast v-if="btnLoading" :text="btnLoadingText" />
+
     <EmptyState v-if="!btnLoading && storeInfoList.length === 0" />
 
     <StoreList
@@ -197,6 +198,7 @@ const getStoreInfoList = async () => {
   if (!hasMoreData.value || btnLoading.value) return
 
   btnLoading.value = true
+
   try {
     const params = {
       page: currentPage.value,

@@ -59,14 +59,22 @@ const router = createRouter({
 // 只在初始加载时监控性能，路由切换时不监控
 let isInitialLoad = true
 
-router.beforeEach((to) => {
+// 合并后的导航守卫
+router.beforeEach((to, from, next) => {
+  // 1. 处理路径大小写
+  const lowerPath = to.path.toLowerCase()
+  if (to.path !== lowerPath) {
+    next({ path: lowerPath, query: to.query, hash: to.hash })
+    return
+  }
+
+  // 2. 页面性能监控
   if (isInitialLoad) {
-    // 获取页面名称
     const pageName = to.name || to.path.replace(/\//g, '-').slice(1) || 'index'
-    // 开始页面性能监控
     performanceMonitor.startPageMonitor(pageName)
   }
-  return true
+
+  next()
 })
 
 // 页面加载完成后结束监控
