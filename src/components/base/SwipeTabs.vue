@@ -70,8 +70,10 @@ const trackElement = ref(null)
 
 // 初始化滚动位置数组
 const initScrollPositions = () => {
-  scrollPositions.value = new Array(props.tabs.length).fill(0)
+  scrollPositions.value = Array.from({ length: props.tabs.length }, () => 0)
 }
+
+
 
 // 路由与 tab 同步
 const syncRouteWithTab = () => {

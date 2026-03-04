@@ -19,6 +19,7 @@ declare module 'vue' {
     LazyImage: typeof import('./../components/base/LazyImage.vue')['default']
     LoadingToast: typeof import('./../components/base/LoadingToast.vue')['default']
     LoadMore: typeof import('./../components/base/LoadMore.vue')['default']
+    NativeSwipeTabs: typeof import('./../components/base/NativeSwipeTabs.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SearchBar: typeof import('./../components/base/SearchBar.vue')['default']
@@ -28,8 +29,6 @@ declare module 'vue' {
     TargetMap: typeof import('./../components/base/TargetMap.vue')['default']
     VanImagePreview: typeof import('vant/es')['ImagePreview']
     VanLoading: typeof import('vant/es')['Loading']
-    VanSwipe: typeof import('vant/es')['Swipe']
-    VanSwipeItem: typeof import('vant/es')['SwipeItem']
     VanTabbar: typeof import('vant/es')['Tabbar']
     VanTabbarItem: typeof import('vant/es')['TabbarItem']
   }

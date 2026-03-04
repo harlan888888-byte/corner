@@ -1,9 +1,11 @@
 <template>
   <!-- 布局容器：包含选项卡和路由视图 -->
   <div class="layout-container">
-    <SwipeTabs
+    <NativeSwipeTabs
       :tabs="tabs"
       :if_click="if_click"
+      :swipeThreshold="0.5"
+      :animationDuration="300"
       v-model:activeTab="activeTab"
       @tabChange="handleTabChange"
     />
@@ -39,6 +41,10 @@
 </template>
 
 <script setup>
+import { defineAsyncComponent, ref, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import NativeSwipeTabs from '@/components/base/NativeSwipeTabs.vue'
+
 const HomeTab = defineAsyncComponent(() => import('./HomeTab.vue'))
 const FootPrintTab = defineAsyncComponent(() => import('./FootPrintTab.vue'))
 const PlanTab = defineAsyncComponent(() => import('./PlanTab.vue'))
@@ -111,6 +117,11 @@ onMounted(() => {
   // 如果当前路由不是首页，设置 if_click 为 true，直接跳转到对应页面
   if (path !== '/hometab') {
     if_click.value = true
+  }
+  // 同步更新 activeTab，确保 tabbar 显示正确的 icon
+  const tabIndex = tabs.findIndex((tab) => tab.path === path)
+  if (tabIndex !== -1) {
+    activeTab.value = tabIndex
   }
 })
 </script>
