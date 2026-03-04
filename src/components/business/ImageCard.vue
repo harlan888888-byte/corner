@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { useVanImagePreview } from '@/utils/vant-utils/useVanImagePreview'
+import { useVanImagePreview } from '@/composables/vant-utils/useVanImagePreview'
 
 const props = defineProps({
   images: {

@@ -86,7 +86,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getStoreDetail } from '@/api/home/store'
 import defaultImgSrc from '@/assets/icons/miss_store.svg'
-import { useVanImagePreview } from '@/utils/vant-utils/useVanImagePreview'
+import { useVanImagePreview } from '@/composables/vant-utils/useVanImagePreview'
 
 const route = useRoute()
 const router = useRouter()
@@ -138,7 +138,7 @@ const getStoreDetailInfo = async () => {
     if (res.data.code === 200) {
       storeInfo.value = res.data.data
       if (storeInfo.value.goods.length > 0) {
-        images.value = [...storeInfo.value.goods.map((good) => good.goods_img)]
+        images.value = storeInfo.value.goods.map((good) => good.goods_img)
         hasGoods.value = true
       } else {
         hasGoods.value = false
