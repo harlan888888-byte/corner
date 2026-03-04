@@ -129,6 +129,7 @@ onMounted(() => {
 <style scoped>
 .layout-container {
   position: relative;
+  height: 100vh;
   overflow: hidden;
 }
 </style>

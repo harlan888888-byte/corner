@@ -6,7 +6,7 @@
         <!-- 默认插槽内容 -->
       </slot>
       <!-- 使用封装的 LoadMore 组件，放在 ul 内部作为最后一个子元素，只有当数据不为空时才显示 -->
-      <li v-if="storeList.length > 0" class="load-more-item">
+      <li v-show="storeList.length > 0" class="load-more-item">
         <LoadMore
           :loading="loading"
           :hasMore="hasMore"
