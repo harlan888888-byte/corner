@@ -3,9 +3,9 @@ import App from '@/App.vue'
 import router from '@/router'
 import pinia from '@/stores'
 import { performanceMonitor } from '@/performance'
-import '@/style/base.css'
-import '@/style/vant-common.css'
-import '@/style/vue-common.css'
+import '@/styles/base.css'
+import '@/styles/vant-common.css'
+import '@/styles/vue-common.css'
 
 // 初始化性能监控
 performanceMonitor.init()
