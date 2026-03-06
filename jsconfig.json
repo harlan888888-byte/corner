@@ -16,10 +16,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
+    "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"]
-    },
-    // "types": ["vite/client"]
+    }
   },
   "include": ["src/**/*.js", "src/**/*.vue", "src/types/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
