@@ -20,24 +20,16 @@ stages:
         certificate: ''
         image: node:20
         command:
+          - '# 简化版调试脚本（只做构建，不传文件）'
           - '#!/bin/bash'
           - set -e
-          - ''
-          - '# 1. 拉取代码'
           - git clone --depth 1 https://gitee.com/harlan123/corner.git .
-          - ''
-          - '# 2. 安装 pnpm'
           - npm install -g pnpm
-          - ''
-          - '# 3. 安装依赖并打包生成 dist'
           - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
           - pnpm install --frozen-lockfile
           - pnpm run build
-          - ''
-          - '# 4. 把 dist 传到你的 Windows 服务器'
-          - apt-get install -y openssh-client sshpass
-          - sshpass -p "你的Windows登录密码" scp -P 22 -r dist/* \
-          - '  "administrator@101.33.227.33:C:/phpstudy_pro/WWW/project/vue_project/"'
+          - '# 打印目录，确认 dist 生成'
+          - ls -l
         artifacts:
           - name: BUILD_ARTIFACT
             path:
