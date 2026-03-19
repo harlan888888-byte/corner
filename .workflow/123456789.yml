@@ -23,25 +23,20 @@ stages:
           - '#!/bin/bash'
           - set -e
           - ''
-          - '# 1. 拉取你的 Gitee 源码（公开地址）'
+          - '# 1. 拉取代码'
           - git clone --depth 1 https://gitee.com/harlan123/corner.git .
           - ''
-          - '# 2. 安装 Node.js 20 + pnpm'
-          - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-          - apt-get install -y nodejs
+          - '# 2. 安装 pnpm'
           - npm install -g pnpm
           - ''
-          - '# 3. 安装依赖并打包生成 dist（和你本地一样）'
+          - '# 3. 安装依赖并打包生成 dist'
           - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
           - pnpm install --frozen-lockfile
           - pnpm run build
           - ''
-          - '# 4. 安装 scp 工具（云端 Linux 环境需要）'
-          - apt-get install -y openssh-client
-          - ''
-          - '# 5. 把 dist 传到你的 Windows Server 2012！'
-          - '# 👇 只需要改这 3 个地方：账号、IP、密码（或者用私钥更安全）'
-          - scp -P 22 -r dist/* \
+          - '# 4. 把 dist 传到你的 Windows 服务器'
+          - apt-get install -y openssh-client sshpass
+          - sshpass -p "你的Windows登录密码" scp -P 22 -r dist/* \
           - '  "administrator@101.33.227.33:C:/phpstudy_pro/WWW/project/vue_project/"'
         artifacts:
           - name: BUILD_ARTIFACT
