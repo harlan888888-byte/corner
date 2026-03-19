@@ -23,7 +23,7 @@ stages:
             - ff8c3602-ab77-408b-9e71-68d5f6937bc4
         deployArtifact:
           - source: build
-            name: test
+            name: public
             target: C:\phpstudy_pro\WWW\project\vue_project
             dependArtifact: output
         script:
