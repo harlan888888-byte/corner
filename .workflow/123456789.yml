@@ -20,16 +20,15 @@ stages:
         certificate: ''
         image: node:20
         command:
-          - '# 简化版调试脚本（只做构建，不传文件）'
-          - '#!/bin/bash'
+          - '#!/bin/sh'
           - set -e
-          - git clone --depth 1 https://gitee.com/harlan123/corner.git .
-          - npm install -g pnpm
-          - export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
-          - pnpm install --frozen-lockfile
-          - pnpm run build
-          - '# 打印目录，确认 dist 生成'
-          - ls -l
+          - '# 1. 生成测试 txt 文件（内容随便写）'
+          - echo "这是 Gitee 流水线生成的测试文件" > test.txt
+          - '# 2. 安装 scp 工具（alpine 镜像需要装）'
+          - apk add openssh-client sshpass
+          - '# 3. 把 txt 传到你的 Windows 服务器（改下面 3 个地方！）'
+          - sshpass -p "你的Windows登录密码" scp -P 22 test.txt \
+          - '  "administrator@101.33.227.33:C:/phpstudy_pro/WWW/project/vue_project/"'
         artifacts:
           - name: BUILD_ARTIFACT
             path:
