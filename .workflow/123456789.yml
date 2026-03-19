@@ -20,15 +20,9 @@ stages:
         certificate: ''
         image: node:20
         command:
-          - '#!/bin/sh'
           - set -e
-          - '# 1. 生成测试 txt 文件（内容随便写）'
-          - echo "这是 Gitee 流水线生成的测试文件" > test.txt
-          - '# 2. 安装 scp 工具（alpine 镜像需要装）'
-          - apk add openssh-client sshpass
-          - '# 3. 把 txt 传到你的 Windows 服务器（改下面 3 个地方！）'
-          - sshpass -p "你的Windows登录密码" scp -P 22 test.txt \
-          - '  "administrator@101.33.227.33:C:/phpstudy_pro/WWW/project/vue_project/"'
+          - echo "流水线测试成功" > test.txt
+          - 'ls -l  # 看一眼文件是否生成'
         notify: []
         strategy:
           retry: '0'
