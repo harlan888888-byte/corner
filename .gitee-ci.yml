@@ -1,3 +1,8 @@
+# 强制指定为 Node.js 项目，避免识别成 Java/Maven
+language: node_js
+node_js:
+  - 20
+
 name: 前端自动部署到Windows2012R2
 on:
   push:
@@ -9,20 +14,13 @@ jobs:
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      - name: 安装Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'  # 缓存pnpm依赖，加速构建
-
       - name: 安装pnpm
         run: npm install -g pnpm
 
-      - name: 安装项目依赖
+      - name: 安装依赖
         run: |
-          # 流水线中跳过Chromium下载
           export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
-          pnpm install
+          pnpm install --frozen-lockfile
 
       - name: 构建项目
         run: pnpm run build
@@ -34,7 +32,7 @@ jobs:
           username: ${{ secrets.WIN_SERVER_USER }}
           password: ${{ secrets.WIN_SERVER_PWD }}
           port: 22
-          source: "dist/*"
-          target: "C:/phpstudy_pro/WWW/project/vue_project/"
+          source: 'dist/*'
+          target: 'C:/phpstudy_pro/WWW/project/vue_project/'
           strip_components: 1
           timeout: 30s
