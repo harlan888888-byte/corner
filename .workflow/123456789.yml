@@ -18,7 +18,7 @@ stages:
         name: execute_by_docker
         displayName: 基于镜像的脚本执行
         certificate: ''
-        image: node:20
+        image: alpine:latest
         command:
           - set -e
           - echo "流水线测试成功" > test.txt
