@@ -1,21 +1,72 @@
-# 工作流名称：自动验证 SSH 连通性（提交代码自动运行）
-name: Auto Test SSH Connection
+# 工作流名称：前端构建并部署到Windows Server 2012（phpstudy+SSH最终版）
+name: Frontend Build & Deploy to WinServer2012 (phpstudy)
 
 on:
   push:
-    branches: [ master ]  # 推送到master分支自动运行
-  workflow_dispatch:      # 保留手动触发（可选）
+    branches: [ master ]
+  workflow_dispatch:
+    deploy_only:
+      type: boolean
+      default: false
+      description: "仅执行部署步骤（跳过构建）"
 
 jobs:
-  test-ssh:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: windows-latest
+    if: ${{ !inputs.deploy_only }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Test SSH Connection to WinServer2012
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+          cache-dependency_path: package-lock.json
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install dependencies
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+          npm_config_registry: https://registry.npmmirror.com
+        run: |
+          pnpm install --strict-peer-dependencies=false
+        shell: pwsh
+        timeout-minutes: 10
+
+      - name: Build production package
+        run: |
+          pnpm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ always() && needs.build.result == 'success' || inputs.deploy_only }}
+    steps:
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Deploy to WinServer2012 via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -23,9 +74,26 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           port: 22
           timeout: 30s
-          command_timeout: 10s
 
           script: |
-            echo "✅ SSH 连接成功！服务器主机名：$(hostname)"
-            echo "✅ 当前服务器用户：$(whoami)"
-            echo "✅ 服务器系统版本：$(systeminfo | findstr /i "OS Name")"
+            $DEPLOY_DIR = "C:\phpstudy_pro\WWW\project\vue_project\front"
+            $BACKUP_DIR = "C:\phpstudy_pro\WWW\project\vue_project\Backup\Project_$(Get-Date -Format 'yyyyMMddHHmmss')"
+            
+            if (Test-Path $DEPLOY_DIR) {
+              New-Item -Path $BACKUP_DIR -ItemType Directory -Force
+              Copy-Item -Path "$DEPLOY_DIR\*" -Destination $BACKUP_DIR -Recurse -Force
+              Write-Host "✅ 旧版本已备份到：$BACKUP_DIR"
+            }
+            
+            Remove-Item -Path "$DEPLOY_DIR\*" -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "✅ 部署目录已清空：$DEPLOY_DIR"
+            
+            Copy-Item -Path "${{ github.workspace }}\dist\*" -Destination $DEPLOY_DIR -Recurse -Force
+            Write-Host "✅ 前端文件已复制到服务器部署目录"
+            
+            if (Test-Path "$DEPLOY_DIR\index.html") {
+              Write-Host "🎉 部署成功！可通过phpstudy访问前端项目"
+            } else {
+              Write-Host "❌ 部署失败！未找到index.html文件"
+              exit 1
+            }
