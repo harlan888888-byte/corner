@@ -1,4 +1,4 @@
-name: Frontend CI/CD（单层ZIP版）
+name: Frontend CI/CD（保留dist目录版）
 on:
   push:
     branches: [ master ]
@@ -25,9 +25,9 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       
-      # 直接上传dist文件夹，Artifacts自动打包成单层ZIP，无套娃
+      # 关键修改：上传dist文件夹本身，保留根目录
       - uses: actions/upload-artifact@v4
         with:
-          name: frontend-dist
-          path: dist  # 直接传文件夹，不是ZIP包
+          name: frontend-dist-zip
+          path: dist  # 去掉末尾的/，表示上传dist文件夹（而非文件夹内的文件）
           retention-days: 7
