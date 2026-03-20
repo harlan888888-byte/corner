@@ -29,5 +29,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-zip
-          path: dist/  # 直接传文件夹，不是ZIP包
+          path: dist  # 直接传文件夹，不是ZIP包
           retention-days: 7
