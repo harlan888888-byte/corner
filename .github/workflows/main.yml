@@ -1,25 +1,33 @@
-# 工作流名称：自动上传 test.txt（只传一个文件、自动触发、零多余文件）
-name: Auto Upload Only TXT (One File)
+# 工作流名称：前端CI/CD（无验证、自动触发）
+name: Frontend CI/CD (No Validation)
 
-# 自动触发（提交master分支自动运行）
 on:
   push:
     branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  upload-txt:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # 1. 创建test.txt（仅核心内容）
-      - name: Create test.txt
-        run: echo "Hello GitHub Actions" > test.txt
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-      # 2. SSH上传（彻底修正scp变量问题，只传一个文件）
-      - name: Upload via SSH
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -27,11 +35,10 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           port: 22
           script: |
-            # 服务器端目标路径（和Windows路径完全一致）
-            TARGET="/c/phpstudy_pro/WWW/project/vue_project/front/test.txt"
-            
-            # 确保目录存在
-            mkdir -p "$(dirname "$TARGET")"
-            
-            # 核心：正确的scp命令，无变量名错误
-            scp -O test.txt "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$TARGET"
+            DEPLOY_DIR="/c/phpstudy_pro/WWW/project/vue_project/front"
+            TEMP_DIR="/c/phpstudy_pro/WWW/project/vue_project/temp_dist"
+            rm -rf "$TEMP_DIR"
+            scp -r -O "${{ github.workspace }}/dist/" "$TEMP_DIR/"
+            rm -rf "$DEPLOY_DIR/*"
+            mv "$TEMP_DIR"/* "$DEPLOY_DIR/"
+            rm -rf "$TEMP_DIR"
