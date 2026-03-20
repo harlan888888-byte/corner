@@ -26,12 +26,18 @@ jobs:
           node-version: '22.x'
           cache: 'npm'
           cache-dependency-path: 'package-lock.json'
-
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+          
       # 步骤3：安装依赖（国内镜像加速）
       - name: Install dependencies
         run: |
-          npm config set registry https://registry.npmmirror.com
-          npm install --frozen-lockfile
+          pnpm config set registry https://registry.npmmirror.com
+          pnpm install --frozen-lockfile
 
       # 步骤4：构建前端项目
       - name: Build production package
