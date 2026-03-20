@@ -40,7 +40,7 @@ jobs:
           name: frontend-dist
           path: dist/
 
-      # ========== 修复：用稳定版scp-action，避免系统误判和tar错误 ==========
+      # ========== 核心修复：禁用自动打包解压，直接传输文件 ==========
       - name: Upload files to Windows Server 2012
         uses: appleboy/scp-action@v0.1.5
         with:
@@ -48,11 +48,13 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          source: "dist/*"
+          source: "dist/**"
           target: "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist"
           overwrite: true
+          strip_components: 1  # 去掉dist/前缀，直接把dist下的文件传到temp_dist
+          rm: false  # 禁止删除目标目录，避免误操作
 
-      # ========== 修复：用PowerShell执行文件操作，确保Windows识别 ==========
+      # ========== 用PowerShell执行文件操作（保持不变） ==========
       - name: Execute file operations on server
         uses: appleboy/ssh-action@v1
         with:
@@ -65,18 +67,22 @@ jobs:
               \$deployDir = 'C:\phpstudy_pro\WWW\vue_project\front'
               \$tempDir = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
 
-              # 1. 强制清空部署目录
+              # 1. 确保目录存在
+              if (-not (Test-Path \$deployDir)) { New-Item -ItemType Directory -Path \$deployDir -Force | Out-Null }
+              if (-not (Test-Path \$tempDir)) { New-Item -ItemType Directory -Path \$tempDir -Force | Out-Null }
+
+              # 2. 强制清空部署目录
               if (Test-Path \$deployDir) {
                 Remove-Item -Path \$deployDir\* -Recurse -Force -ErrorAction SilentlyContinue
               }
 
-              # 2. 强制移动文件
+              # 3. 强制移动文件
               Move-Item -Path \$tempDir\* -Destination \$deployDir -Force
 
-              # 3. 删除临时目录
+              # 4. 删除临时目录
               Remove-Item -Path \$tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
-              # 4. 验证部署结果
+              # 5. 验证部署结果
               Write-Host '部署成功！最新文件修改时间：'
               Get-ChildItem -Path \$deployDir | Select-Object Name, LastWriteTime
             "
