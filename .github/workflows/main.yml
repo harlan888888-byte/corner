@@ -41,7 +41,7 @@ jobs:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
           npm_config_registry: https://registry.npmmirror.com
         run: |
-          pnpm install --legacy-peer-deps --no-audit --no-fund
+          pnpm install --strict-peer-dependencies=false --no-audit --no-fund
         shell: pwsh
         timeout-minutes: 10
 
