@@ -46,11 +46,20 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 关键：用双反斜杠\\表示Windows路径，避免YAML转义错误
-          source: "dist/*"
-          target: "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist"
-          # 关键：脚本块用单引号包裹，禁用YAML转义，cmd命令用双反斜杠
+          # 1. 用原生source/target上传文件，绕开所有传输坑
+          source: dist/
+          target: 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
+          # 2. 用PowerShell执行，单引号包裹路径，彻底绕开shell解析和YAML转义
           script: |
-            del /f /s /q "C:\\phpstudy_pro\\WWW\\vue_project\\front\\*"
-            move /y "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist\\*" "C:\\phpstudy_pro\\WWW\\vue_project\\front\\"
-            rmdir /s /q "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist"
+            $deployDir = 'C:\phpstudy_pro\WWW\vue_project\front'
+            $tempDir = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
+
+            # 强制清空部署目录
+            Remove-Item -Path "$deployDir\*" -Recurse -Force -ErrorAction SilentlyContinue
+            # 强制移动文件
+            Move-Item -Path "$tempDir\*" -Destination $deployDir -Force
+            # 删除临时目录
+            Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+          # 3. 关键：指定执行shell为powershell.exe，彻底绕开Linux shell解析
+          command_timeout: 30s
+          debug: false
