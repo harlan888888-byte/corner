@@ -46,10 +46,18 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           port: 22
           script: |
-            DEPLOY_DIR="/c/phpstudy_pro/WWW/project/vue_project/front"
-            TEMP_DIR="/c/phpstudy_pro/WWW/project/vue_project/temp_dist"
-            rm -rf "$TEMP_DIR"
-            scp -r -O "dist/" "$TEMP_DIR/"
-            rm -rf "$DEPLOY_DIR/*"
-            mv "$TEMP_DIR"/* "$DEPLOY_DIR/"
-            rm -rf "$TEMP_DIR"
+            # 适配Windows服务器，用PowerShell执行原生命令
+            powershell -Command "
+              \$DEPLOY_DIR='C:\phpstudy_pro\WWW\project\vue_project\front'
+              \$TEMP_DIR='C:\phpstudy_pro\WWW\project\vue_project\temp_dist'
+              # 1. 清空临时目录
+              Remove-Item -Path \$TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
+              # 2. 上传dist到临时目录
+              scp -r -O dist/ \$TEMP_DIR/
+              # 3. 清空部署目录
+              Remove-Item -Path \$DEPLOY_DIR/* -Recurse -Force -ErrorAction SilentlyContinue
+              # 4. 移动临时目录文件到部署目录
+              Move-Item -Path \$TEMP_DIR/* -Destination \$DEPLOY_DIR/ -Force
+              # 5. 删除临时目录
+              Remove-Item -Path \$TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
+            "
