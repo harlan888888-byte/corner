@@ -1,7 +1,6 @@
-# 工作流名称：前端构建并部署到Windows Server 2012（phpstudy）
+# 工作流名称：前端构建并部署到Windows Server 2012（phpstudy+pnpm+彻底跳过Chrome）
 name: Frontend Build & Deploy to WinServer2012 (phpstudy)
 
-# 触发条件：仅master分支推送时触发
 on:
   push:
     branches: [ master ]
@@ -13,47 +12,41 @@ jobs:
   deploy:
     runs-on: windows-latest
     steps:
-      # 步骤1：拉取仓库代码
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 步骤2：安装Node.js 22
       - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-          cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
-          
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9
           run_install: false
-          
-      # 步骤3：安装依赖（国内镜像加速）
+
       - name: Install dependencies
+        env:
+          # 步骤级环境变量，确保Puppeteer拿到，彻底跳过Chrome下载
+          PUPPETEER_SKIP_DOWNLOAD: true
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+          npm_config_registry: https://registry.npmmirror.com
         run: |
-          pnpm config set registry https://registry.npmmirror.com
-          pnpm install --frozen-lockfile
-          $env:PUPPETEER_SKIP_DOWNLOAD = "true"
-          $env:PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
-          npm install --legacy-peer-deps --no-audit --no-fund
-          pnpm store prune
-          pnpm install --frozen-lockfile --legacy-peer-deps --no-audit --no-fund
-        shell: pwsh  
-        timeout-minutes: 10  # 最多等5分钟，超时自动终止
-        
-      # 步骤4：构建前端项目
+          pnpm install --legacy-peer-deps --no-audit --no-fund
+        shell: pwsh
+        timeout-minutes: 10
+
       - name: Build production package
         run: |
-          npm run build
+          pnpm run build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
-      # 步骤5：部署到Windows Server 2012（phpstudy专属）
       - name: Deploy to WinServer2012 via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -63,28 +56,22 @@ jobs:
           port: 22
           timeout: 30s
 
-          # 核心：适配phpstudy，无IIS相关代码
           script: |
-            # 1. 定义phpstudy的部署/备份目录（已匹配你的路径）
             $DEPLOY_DIR = "C:\phpstudy_pro\WWW\project\vue_project\front"
             $BACKUP_DIR = "C:\phpstudy_pro\WWW\project\vue_project\Backup\Project_$(Get-Date -Format 'yyyyMMddHHmmss')"
             
-            # 2. 备份旧版本（防止部署失败回滚）
             if (Test-Path $DEPLOY_DIR) {
               New-Item -Path $BACKUP_DIR -ItemType Directory -Force
               Copy-Item -Path "$DEPLOY_DIR\*" -Destination $BACKUP_DIR -Recurse -Force
               Write-Host "✅ 旧版本已备份到：$BACKUP_DIR"
             }
             
-            # 3. 清空部署目录（删除旧文件，避免缓存）
             Remove-Item -Path "$DEPLOY_DIR\*" -Recurse -Force -ErrorAction SilentlyContinue
             Write-Host "✅ 部署目录已清空：$DEPLOY_DIR"
             
-            # 4. 复制新构建的前端文件到phpstudy目录（核心）
             robocopy "${{ github.workspace }}\dist" "\\${{ secrets.SERVER_HOST }}\C$\phpstudy_pro\WWW\project\vue_project\front" /E /COPYALL /R:3 /W:5 /NP
             Write-Host "✅ 前端文件已复制到服务器部署目录"
             
-            # 5. 验证部署结果
             if (Test-Path "$DEPLOY_DIR\index.html") {
               Write-Host "🎉 部署成功！可通过phpstudy访问前端项目"
             } else {
