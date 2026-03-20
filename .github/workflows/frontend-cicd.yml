@@ -1,4 +1,4 @@
-name: Frontend CI/CD (仅传输ZIP包到Windows Server 2012)
+name: Frontend CI/CD（仅构建打包，不上传服务器）
 on:
   push:
     branches: [ master ]
@@ -25,35 +25,12 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       
-      # ========== 关键步骤1：将dist目录打包为ZIP（自定义名称，便于识别） ==========
-      - name: 打包dist目录为ZIP文件
+      # 打包dist为ZIP，上传到GitHub Artifacts
+      - name: 打包并上传ZIP包
         run: |
-          zip -r frontend-build-$(date +%Y%m%d%H%M%S).zip dist/
-          # 查看打包结果，便于调试
-          ls -lh *.zip
-      
-      # ========== 关键步骤2：上传ZIP包到GitHub Artifacts（可选，便于手动下载） ==========
+          zip -r frontend-build.zip dist/
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-zip
-          path: ./frontend-build-*.zip
+          path: ./frontend-build.zip
           retention-days: 7
-
-  deploy:
-    needs: build
-    if: always() && (success() || github.event.inputs.deploy_only)
-    runs-on: ubuntu-latest
-    steps:
-      # ========== 关键步骤3：下载GitHub打包的ZIP产物 ==========
-      - uses: actions/download-artifact@v4
-        with:
-          name: frontend-dist-zip
-          path: ./
-      
-      # ========== 关键步骤4：直接传输ZIP包到Windows服务器指定目录（无后续操作） ==========
-      - name: 传输ZIP包到Windows Server 2012指定文件夹
-        run: |
-          # 原生SCP命令，直接传ZIP包，无任何解压/移动操作
-          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-            ./frontend-build-*.zip \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"/cygdrive/c/phpstudy_pro/WWW/vue_project/frontend_dist_package/"
