@@ -1,4 +1,4 @@
-name: Frontend CI/CD (Windows Server 2012)
+name: Frontend CI/CD (Windows Server 2012 - 复刻成功版)
 on:
   push:
     branches: [ master ]
@@ -39,25 +39,48 @@ jobs:
         with:
           name: frontend-dist
           path: dist/
-      - name: Deploy to Windows Server 2012
+
+      # ========== 第一步：单独传输文件（复刻成功逻辑，用scp-action） ==========
+      - name: Upload files to Windows Server 2012
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASS }}
+          port: 22
+          # 成功关键：source/target是scp-action的原生参数，适配Windows路径
+          source: "dist/*"
+          target: "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist"
+          # 强制覆盖文件，避免传输失败
+          overwrite: true
+
+      # ========== 第二步：单独执行文件操作（复刻成功逻辑，仅执行PowerShell） ==========
+      - name: Execute file operations on server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
+          # 仅执行PowerShell文件操作，无任何传输逻辑
           script: |
-            # 1. 用scp上传文件（Windows OpenSSH原生支持，无参数错误）
-            scp -r dist/* C:\phpstudy_pro\WWW\vue_project\temp_dist\
-            # 2. 用PowerShell执行文件操作（显式调用，Windows Server 2012原生支持）
             C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command "
+              # 定义路径（复刻成功的路径写法）
               \$deployDir = 'C:\phpstudy_pro\WWW\vue_project\front'
               \$tempDir = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
 
-              # 强制清空部署目录
-              Remove-Item -Path \$deployDir\* -Recurse -Force -ErrorAction SilentlyContinue
-              # 强制移动文件
-              Move-Item -Path \$tempDir\* -Destination \$deployDir -Force
-              # 删除临时目录
+              # 1. 强制清空部署目录（复刻成功的命令）
+              if (Test-Path \$deployDir) {
+                Remove-Item -Path \"\$deployDir\*\" -Recurse -Force -ErrorAction SilentlyContinue
+              }
+
+              # 2. 强制移动文件（复刻成功的命令）
+              Move-Item -Path \"\$tempDir\*\" -Destination \$deployDir -Force
+
+              # 3. 删除临时目录（复刻成功的命令）
               Remove-Item -Path \$tempDir -Recurse -Force -ErrorAction SilentlyContinue
+
+              # 验证：输出部署目录最新文件信息
+              Write-Host '部署成功！最新文件：'
+              Get-ChildItem -Path \$deployDir | Select-Object Name, LastWriteTime
             "
