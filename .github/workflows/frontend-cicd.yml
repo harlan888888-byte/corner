@@ -1,4 +1,4 @@
-name: Frontend CI/CD（仅保留dist目录）
+name: Frontend CI/CD（精准匹配需求版）
 on:
   push:
     branches: [ master ]
@@ -25,13 +25,12 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       
-      # ========== 核心：用锚定语法强制保留dist文件夹 ==========
-      - name: 上传dist文件夹（仅保留dist根目录）
+      # ========== 核心：直接上传dist文件夹，关闭Artifacts的路径扁平化 ==========
+      - name: 上传dist文件夹（解压即dist/）
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-zip
-          # 关键语法：./dist 锚定仓库根目录的dist文件夹，** 递归包含所有内容
-          path: |
-            ./dist/**
-            !./dist/**/*
+          path: dist/
+          # 关键参数：禁用路径扁平化，强制保留dist根目录
+          flatten-paths: false
           retention-days: 7
