@@ -1,12 +1,12 @@
 name: Frontend CI/CD (Build & Deploy Separate)
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   workflow_dispatch:
     inputs:
       deploy_only:
         type: boolean
-        description: '仅执行部署（需先构建过）'
+        description: "仅执行部署（需先构建过）"
         required: false
         default: false
 
@@ -39,35 +39,45 @@ jobs:
         with:
           name: frontend-dist
           path: dist/
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1
+      # 关键：用Windows Server 2012原生方式部署
+      - uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
+          # 显式调用Windows Server 2012的PowerShell，用原生命令
           script: |
-            powershell -Command "
-              \$DEPLOY_DIR = 'C:\phpstudy_pro\WWW\project\vue_project\front'
-              \$TEMP_DIR = 'C:\phpstudy_pro\WWW\project\vue_project\temp_dist'
-              
-              # 1. 清理临时目录
-              if (Test-Path \$TEMP_DIR) { Remove-Item \$TEMP_DIR -Recurse -Force }
-              New-Item -Path \$TEMP_DIR -ItemType Directory -Force | Out-Null
-              
-              # 2. 用sftp上传文件（Windows原生兼容）
-              sftp -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<EOF
-              put -r dist/* \$TEMP_DIR/
-              EOF
-              
-              # 3. 清理部署目录
-              if (Test-Path \$DEPLOY_DIR) {
-                  Get-ChildItem -Path \$DEPLOY_DIR -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+            C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command "
+              # Windows Server 2012 部署路径（按你的实际路径修改）
+              $DEPLOY_DIR = 'C:\phpstudy_pro\WWW\vue_project\front'
+              $TEMP_DIR = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
+              $GITHUB_DIST = 'dist'
+
+              # 1. 强制创建/清空临时目录
+              if (Test-Path $TEMP_DIR) {
+                Remove-Item -Path $TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
               }
-              
-              # 4. 移动文件到部署目录
-              Move-Item -Path \$TEMP_DIR/* -Destination \$DEPLOY_DIR -Force
-              
-              # 5. 删除临时目录
-              Remove-Item \$TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
+              New-Item -Path $TEMP_DIR -ItemType Directory -Force | Out-Null
+
+              # 2. 用SFTP上传文件（Windows Server 2012 OpenSSH原生支持）
+              sftp -o StrictHostKeyChecking=no $env:USERNAME@$env:COMPUTERNAME << EOF
+              cd $TEMP_DIR
+              put -r $GITHUB_DIST/* .
+              EOF
+
+              # 3. 强制清空部署目录（忽略文件占用）
+              if (Test-Path $DEPLOY_DIR) {
+                Get-ChildItem -Path $DEPLOY_DIR -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+              }
+
+              # 4. 用robocopy强制移动文件（Windows Server 2012原生，解决覆盖问题）
+              robocopy $TEMP_DIR $DEPLOY_DIR /E /MIR /R:3 /W:2 /NP
+
+              # 5. 验证部署结果：输出文件修改时间
+              Write-Host '部署完成！最新文件信息：'
+              Get-ChildItem -Path $DEPLOY_DIR | Select-Object Name, LastWriteTime
+
+              # 6. 清理临时目录
+              Remove-Item -Path $TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
             "
