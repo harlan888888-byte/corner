@@ -47,27 +47,10 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           port: 22
           script: |
-            powershell -Command "
-              \$DEPLOY_DIR = 'C:\phpstudy_pro\WWW\project\vue_project\front'
-              \$TEMP_DIR = 'C:\phpstudy_pro\WWW\project\vue_project\temp_dist'
-              
-              # 1. 清理临时目录
-              if (Test-Path \$TEMP_DIR) { Remove-Item \$TEMP_DIR -Recurse -Force }
-              New-Item -Path \$TEMP_DIR -ItemType Directory -Force | Out-Null
-              
-              # 2. 用sftp上传文件（Windows原生兼容）
-              sftp -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<EOF
-              put -r dist/* \$TEMP_DIR/
-              EOF
-              
-              # 3. 清理部署目录
-              if (Test-Path \$DEPLOY_DIR) {
-                  Get-ChildItem -Path \$DEPLOY_DIR -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-              }
-              
-              # 4. 移动文件到部署目录
-              Move-Item -Path \$TEMP_DIR/* -Destination \$DEPLOY_DIR -Force
-              
-              # 5. 删除临时目录
-              Remove-Item \$TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
-            "
+            DEPLOY_DIR="/c/phpstudy_pro/WWW/project/vue_project/front"
+            TEMP_DIR="/c/phpstudy_pro/WWW/project/vue_project/temp_dist"
+            rm -rf "$TEMP_DIR"
+            scp -r -O "dist/" "$TEMP_DIR/"
+            rm -rf "$DEPLOY_DIR/*"
+            mv "$TEMP_DIR"/* "$DEPLOY_DIR/"
+            rm -rf "$TEMP_DIR"
