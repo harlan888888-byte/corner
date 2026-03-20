@@ -1,30 +1,32 @@
-# 工作流名称：100%自动化上传txt到服务器（无需手动操作）
-name: Auto Upload TXT to Server (Fully Auto)
+# 工作流名称：自动上传 txt 文件（密码登录、零私钥、自动触发）
+name: Auto Upload TXT via SSH (Password Only)
 
-# 自动触发（提交master分支就跑）
+# 自动触发（提交master分支自动运行）
 on:
   push:
     branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  upload:
-    runs-on: ubuntu-latest  # 彻底避开Windows平台兼容坑
+  upload-txt:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout代码
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. 自动创建txt文件
-      - name: 创建test.txt
-        run: echo "自动化上传成功！$(date)" > test.txt
+      - name: Create test.txt
+        run: echo "Hello GitHub Actions" > test.txt
 
-      # 2. 自动SSH上传到服务器（全程无手动操作）
-      - name: 自动上传到服务器
-        uses: easingthemes/ssh-deploy@main  # 用更稳定的SSH Action，无兼容问题
-        env:
-          ARGS: "-rltgoDzvO --delete"
-          SOURCE: "test.txt"  # 要上传的文件
-          REMOTE_HOST: ${{ secrets.SERVER_HOST }} # 服务器IP
-          REMOTE_USER: ${{ secrets.SERVER_USER }} # 用户名（如administrator）
-          REMOTE_PASSWORD: ${{ secrets.SERVER_PASS }} # 服务器密码
-          TARGET: "/c/phpstudy_pro/WWW/project/vue_project/front/" # 服务器目标目录
+      - name: Upload via SSH (Password Only)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASS }}
+          port: 22
+          timeout: 30s
+
+          # 纯极简脚本，无任何if/else/验证
+          script: |
+            mkdir -p /c/phpstudy_pro/WWW/project/vue_project/front
+            scp "${GITHUB_WORKSPACE}/test.txt" /c/phpstudy_pro/WWW/project/vue_project/front/test.txt
