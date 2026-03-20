@@ -1,93 +1,80 @@
-# 工作流名称：前端构建并部署到Windows Server 2012
-name: Frontend Build & Deploy to WinServer2012
+# 工作流名称：前端构建并部署到Windows Server 2012（phpstudy）
+name: Frontend Build & Deploy to WinServer2012 (phpstudy)
 
-# 触发条件：仅main分支推送时触发（部署分支，可改为dev测试）
+# 触发条件：仅master分支推送时触发
 on:
   push:
     branches: [ master ]
-    # 排除仅修改文档的提交，避免无效部署
     paths-ignore:
       - '**.md'
       - 'LICENSE'
 
-# 部署任务
 jobs:
   deploy:
-    # 构建环境：GitHub托管的Windows虚拟机（匹配Windows开发环境）
     runs-on: windows-latest
-
     steps:
       # 步骤1：拉取仓库代码
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 拉取完整提交记录（避免构建时git信息缺失）
+          fetch-depth: 0
 
-      # 步骤2：安装Node.js 22（核心适配你的版本）
+      # 步骤2：安装Node.js 22
       - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-          # 缓存node_modules，加速构建（前端必配）
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'  # 锁定依赖缓存
+          cache-dependency-path: 'package-lock.json'
 
-      # 步骤3：安装依赖（前端核心步骤）
+      # 步骤3：安装依赖（国内镜像加速）
       - name: Install dependencies
         run: |
-          npm config set registry https://registry.npmmirror.com  # 国内镜像加速
-          npm install --frozen-lockfile  # 严格按lock文件安装，避免依赖不一致
+          npm config set registry https://registry.npmmirror.com
+          npm install --frozen-lockfile
 
-      # 步骤4：构建前端项目（生产环境打包）
+      # 步骤4：构建前端项目
       - name: Build production package
         run: |
-          npm run build  # 通用构建命令（Vue/React默认，可改为你的命令如build:prod）
+          npm run build
         env:
-          # 传递环境变量（根据你的项目需要添加，比如接口地址）
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}  # 从Secrets读取，避免硬编码
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
-      # 步骤5：部署到Windows Server 2012（SSH方式，推荐）
+      # 步骤5：部署到Windows Server 2012（phpstudy专属）
       - name: Deploy to WinServer2012 via SSH
         uses: appleboy/ssh-action@master
         with:
-          # 服务器配置（从GitHub Secrets读取，绝对不要硬编码！）
-          host: ${{ secrets.SERVER_HOST }}        # 服务器IP，如192.168.1.100
-          username: ${{ secrets.SERVER_USER }}    # 服务器账号，如Administrator
-          password: ${{ secrets.SERVER_PASS }}    # 服务器密码
-          port: 22                                # SSH端口（WinServer2012需先装OpenSSH）
-          # 超时时间（避免大文件传输中断）
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASS }}
+          port: 22
           timeout: 30s
 
-          # 远程执行的部署脚本（前端专属）
+          # 核心：适配phpstudy，无IIS相关代码
           script: |
-            # 1. 定义部署目录（替换为你的服务器目录）
-            DEPLOY_DIR="D:\WebSite\Frontend\YourProject"
-            BACKUP_DIR="D:\WebSite\Backup\YourProject_$(Get-Date -Format 'yyyyMMddHHmmss')"
+            # 1. 定义phpstudy的部署/备份目录（已匹配你的路径）
+            $DEPLOY_DIR = "C:\phpstudy_pro\WWW\project\vue_project\front"
+            $BACKUP_DIR = "C:\phpstudy_pro\WWW\project\vue_project\Backup\Project_$(Get-Date -Format 'yyyyMMddHHmmss')"
             
-            # 2. 备份旧版本（方便回滚）
+            # 2. 备份旧版本（防止部署失败回滚）
             if (Test-Path $DEPLOY_DIR) {
               New-Item -Path $BACKUP_DIR -ItemType Directory -Force
               Copy-Item -Path "$DEPLOY_DIR\*" -Destination $BACKUP_DIR -Recurse -Force
-              Write-Host "Old version backed up to $BACKUP_DIR"
+              Write-Host "✅ 旧版本已备份到：$BACKUP_DIR"
             }
             
-            # 3. 停止IIS站点（避免文件被占用）
-            Import-Module WebAdministration
-            Stop-Website -Name "YourFrontendSite"  # 替换为你的IIS站点名
-            
-            # 4. 清空部署目录（删除旧文件）
+            # 3. 清空部署目录（删除旧文件，避免缓存）
             Remove-Item -Path "$DEPLOY_DIR\*" -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "✅ 部署目录已清空：$DEPLOY_DIR"
             
-            # 5. 复制新构建的文件到服务器（dist是前端默认构建目录）
-            robocopy "${{ github.workspace }}\dist" "\\${{ secrets.SERVER_HOST }}\D$\WebSite\Frontend\YourProject" /E /COPYALL /R:3 /W:5 /NP
+            # 4. 复制新构建的前端文件到phpstudy目录（核心）
+            robocopy "${{ github.workspace }}\dist" "\\${{ secrets.SERVER_HOST }}\C$\phpstudy_pro\WWW\project\vue_project\front" /E /COPYALL /R:3 /W:5 /NP
+            Write-Host "✅ 前端文件已复制到服务器部署目录"
             
-            # 6. 启动IIS站点
-            Start-Website -Name "YourFrontendSite"
-            
-            # 7. 验证部署结果
+            # 5. 验证部署结果
             if (Test-Path "$DEPLOY_DIR\index.html") {
-              Write-Host "✅ Deployment success! Frontend files copied to $DEPLOY_DIR"
+              Write-Host "🎉 部署成功！可通过phpstudy访问前端项目"
             } else {
-              Write-Host "❌ Deployment failed! index.html not found"
+              Write-Host "❌ 部署失败！未找到index.html文件"
               exit 1
             }
