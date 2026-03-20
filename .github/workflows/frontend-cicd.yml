@@ -49,7 +49,7 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           port: 22
           source: "dist/**"  # 传输dist下所有文件
-          target: "C:\\phpstudy_pro\\WWW\\vue_project\\frontend_dist_package"  # 直接传到这个目录
+          target: "frontend_dist_package"  # 直接传到这个目录
           overwrite: true
           debug: true  # 开启调试日志，方便看传输结果
 
