@@ -1,0 +1,28 @@
+version: '1.0'
+name: '123456789'
+displayName: '1111'
+triggers:
+  trigger: auto
+  push:
+    branches:
+      prefix:
+        - ''
+stages:
+  - name: stage-cb899d3a
+    displayName: '111'
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: execute@docker
+        name: execute_by_docker
+        displayName: 基于镜像的脚本执行
+        certificate: ''
+        image: alpine:latest
+        command:
+          - set -e
+          - echo "流水线测试成功" > test.txt
+          - 'ls -l  # 看一眼文件是否生成'
+        notify: []
+        strategy:
+          retry: '0'
