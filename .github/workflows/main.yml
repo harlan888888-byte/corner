@@ -4,7 +4,7 @@ name: Frontend Build & Deploy to WinServer2012
 # 触发条件：仅main分支推送时触发（部署分支，可改为dev测试）
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     # 排除仅修改文档的提交，避免无效部署
     paths-ignore:
       - '**.md'
