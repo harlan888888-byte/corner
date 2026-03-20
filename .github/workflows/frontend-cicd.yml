@@ -1,4 +1,4 @@
-name: Frontend CI/CD (Windows Server 2012 - 最终修复版)
+name: Frontend CI/CD (Windows Server 2012 - 仅传输压缩包版)
 on:
   push:
     branches: [ master ]
@@ -40,49 +40,48 @@ jobs:
           name: frontend-dist
           path: dist/
 
-      # ========== 核心修复：禁用自动打包解压，直接传输文件 ==========
-      - name: Upload files to Windows Server 2012
-        uses: appleboy/scp-action@v0.1.5
+      # ========== 核心修改：直接传输dist目录（非打包）到服务器指定路径 ==========
+      - name: 上传构建包到Windows Server 2012（仅传输，不解压）
+        uses: appleboy/scp-action@v0.2.3  # 重构版，无tar依赖
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          source: "dist/**"
-          target: "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist"
+          source: "dist/**"  # 传输dist下所有文件
+          target: "C:\\phpstudy_pro\\WWW\\vue_project\\frontend_dist_package"  # 直接传到这个目录
           overwrite: true
-          strip_components: 1  # 去掉dist/前缀，直接把dist下的文件传到temp_dist
-          rm: false  # 禁止删除目标目录，避免误操作
+          debug: true  # 开启调试日志，方便看传输结果
 
-      # ========== 用PowerShell执行文件操作（保持不变） ==========
-      - name: Execute file operations on server
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASS }}
-          port: 22
-          script: |
-            C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command "
-              \$deployDir = 'C:\phpstudy_pro\WWW\vue_project\front'
-              \$tempDir = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
+      # ========== 以下步骤全部注释，仅保留传输 ==========
+      # - name: Execute file operations on server
+      #   uses: appleboy/ssh-action@v1
+      #   with:
+      #     host: ${{ secrets.SERVER_HOST }}
+      #     username: ${{ secrets.SERVER_USER }}
+      #     password: ${{ secrets.SERVER_PASS }}
+      #     port: 22
+      #     script: |
+      #       C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command "
+      #         \$deployDir = 'C:\phpstudy_pro\WWW\vue_project\front'
+      #         \$tempDir = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
 
-              # 1. 确保目录存在
-              if (-not (Test-Path \$deployDir)) { New-Item -ItemType Directory -Path \$deployDir -Force | Out-Null }
-              if (-not (Test-Path \$tempDir)) { New-Item -ItemType Directory -Path \$tempDir -Force | Out-Null }
+      #         # 1. 确保目录存在
+      #         if (-not (Test-Path \$deployDir)) { New-Item -ItemType Directory -Path \$deployDir -Force | Out-Null }
+      #         if (-not (Test-Path \$tempDir)) { New-Item -ItemType Directory -Path \$tempDir -Force | Out-Null }
 
-              # 2. 强制清空部署目录
-              if (Test-Path \$deployDir) {
-                Remove-Item -Path \$deployDir\* -Recurse -Force -ErrorAction SilentlyContinue
-              }
+      #         # 2. 强制清空部署目录
+      #         if (Test-Path \$deployDir) {
+      #           Remove-Item -Path \$deployDir\* -Recurse -Force -ErrorAction SilentlyContinue
+      #         }
 
-              # 3. 强制移动文件
-              Move-Item -Path \$tempDir\* -Destination \$deployDir -Force
+      #         # 3. 强制移动文件
+      #         Move-Item -Path \$tempDir\* -Destination \$deployDir -Force
 
-              # 4. 删除临时目录
-              Remove-Item -Path \$tempDir -Recurse -Force -ErrorAction SilentlyContinue
+      #         # 4. 删除临时目录
+      #         Remove-Item -Path \$tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
-              # 5. 验证部署结果
-              Write-Host '部署成功！最新文件修改时间：'
-              Get-ChildItem -Path \$deployDir | Select-Object Name, LastWriteTime
-            "
+      #         # 5. 验证部署结果
+      #         Write-Host '部署成功！最新文件修改时间：'
+      #         Get-ChildItem -Path \$deployDir | Select-Object Name, LastWriteTime
+      #       "
