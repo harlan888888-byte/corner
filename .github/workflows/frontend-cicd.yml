@@ -1,4 +1,4 @@
-name: Frontend CI/CD (Windows Server 2012 - 仅传输压缩包版)
+name: Frontend CI/CD (仅传输ZIP包到Windows Server 2012)
 on:
   push:
     branches: [ master ]
@@ -24,10 +24,19 @@ jobs:
           version: latest
       - run: pnpm install
       - run: pnpm run build
+      
+      # ========== 关键步骤1：将dist目录打包为ZIP（自定义名称，便于识别） ==========
+      - name: 打包dist目录为ZIP文件
+        run: |
+          zip -r frontend-build-$(date +%Y%m%d%H%M%S).zip dist/
+          # 查看打包结果，便于调试
+          ls -lh *.zip
+      
+      # ========== 关键步骤2：上传ZIP包到GitHub Artifacts（可选，便于手动下载） ==========
       - uses: actions/upload-artifact@v4
         with:
-          name: frontend-dist
-          path: dist/
+          name: frontend-dist-zip
+          path: ./frontend-build-*.zip
           retention-days: 7
 
   deploy:
@@ -35,53 +44,16 @@ jobs:
     if: always() && (success() || github.event.inputs.deploy_only)
     runs-on: ubuntu-latest
     steps:
+      # ========== 关键步骤3：下载GitHub打包的ZIP产物 ==========
       - uses: actions/download-artifact@v4
         with:
-          name: frontend-dist
-          path: dist/
-
-      # ========== 核心修改：直接传输dist目录（非打包）到服务器指定路径 ==========
-      - name: 上传构建包到Windows Server 2012（仅传输，不解压）
-        uses: appleboy/scp-action@v1.0.0  # 重构版，无tar依赖
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASS }}
-          port: 22
-          source: "dist/**"  # 传输dist下所有文件
-          target: "frontend_dist_package"  # 直接传到这个目录
-          overwrite: true
-          debug: true  # 开启调试日志，方便看传输结果
-
-      # ========== 以下步骤全部注释，仅保留传输 ==========
-      # - name: Execute file operations on server
-      #   uses: appleboy/ssh-action@v1
-      #   with:
-      #     host: ${{ secrets.SERVER_HOST }}
-      #     username: ${{ secrets.SERVER_USER }}
-      #     password: ${{ secrets.SERVER_PASS }}
-      #     port: 22
-      #     script: |
-      #       C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command "
-      #         \$deployDir = 'C:\phpstudy_pro\WWW\vue_project\front'
-      #         \$tempDir = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
-
-      #         # 1. 确保目录存在
-      #         if (-not (Test-Path \$deployDir)) { New-Item -ItemType Directory -Path \$deployDir -Force | Out-Null }
-      #         if (-not (Test-Path \$tempDir)) { New-Item -ItemType Directory -Path \$tempDir -Force | Out-Null }
-
-      #         # 2. 强制清空部署目录
-      #         if (Test-Path \$deployDir) {
-      #           Remove-Item -Path \$deployDir\* -Recurse -Force -ErrorAction SilentlyContinue
-      #         }
-
-      #         # 3. 强制移动文件
-      #         Move-Item -Path \$tempDir\* -Destination \$deployDir -Force
-
-      #         # 4. 删除临时目录
-      #         Remove-Item -Path \$tempDir -Recurse -Force -ErrorAction SilentlyContinue
-
-      #         # 5. 验证部署结果
-      #         Write-Host '部署成功！最新文件修改时间：'
-      #         Get-ChildItem -Path \$deployDir | Select-Object Name, LastWriteTime
-      #       "
+          name: frontend-dist-zip
+          path: ./
+      
+      # ========== 关键步骤4：直接传输ZIP包到Windows服务器指定目录（无后续操作） ==========
+      - name: 传输ZIP包到Windows Server 2012指定文件夹
+        run: |
+          # 原生SCP命令，直接传ZIP包，无任何解压/移动操作
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            ./frontend-build-*.zip \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"/cygdrive/c/phpstudy_pro/WWW/vue_project/frontend_dist_package/"
