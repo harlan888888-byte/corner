@@ -1,0 +1,39 @@
+# 工作流1：仅构建前端（pnpm、自动触发、保存产物）
+name: Frontend Build (pnpm, Only)
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'  # 缓存pnpm依赖，加速构建
+
+      # 核心：安装pnpm（关键，GitHub Runner默认没有pnpm）
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install Dependencies (pnpm)
+        run: pnpm install  # 用pnpm安装依赖
+
+      - name: Build (pnpm)
+        run: pnpm run build  # 用pnpm执行构建命令
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+          retention-days: 7
