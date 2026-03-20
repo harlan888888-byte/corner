@@ -1,0 +1,93 @@
+# 工作流名称：前端构建并部署到Windows Server 2012
+name: Frontend Build & Deploy to WinServer2012
+
+# 触发条件：仅main分支推送时触发（部署分支，可改为dev测试）
+on:
+  push:
+    branches: [ main ]
+    # 排除仅修改文档的提交，避免无效部署
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+
+# 部署任务
+jobs:
+  deploy:
+    # 构建环境：GitHub托管的Windows虚拟机（匹配Windows开发环境）
+    runs-on: windows-latest
+
+    steps:
+      # 步骤1：拉取仓库代码
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 拉取完整提交记录（避免构建时git信息缺失）
+
+      # 步骤2：安装Node.js 22（核心适配你的版本）
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          # 缓存node_modules，加速构建（前端必配）
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'  # 锁定依赖缓存
+
+      # 步骤3：安装依赖（前端核心步骤）
+      - name: Install dependencies
+        run: |
+          npm config set registry https://registry.npmmirror.com  # 国内镜像加速
+          npm install --frozen-lockfile  # 严格按lock文件安装，避免依赖不一致
+
+      # 步骤4：构建前端项目（生产环境打包）
+      - name: Build production package
+        run: |
+          npm run build  # 通用构建命令（Vue/React默认，可改为你的命令如build:prod）
+        env:
+          # 传递环境变量（根据你的项目需要添加，比如接口地址）
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}  # 从Secrets读取，避免硬编码
+
+      # 步骤5：部署到Windows Server 2012（SSH方式，推荐）
+      - name: Deploy to WinServer2012 via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          # 服务器配置（从GitHub Secrets读取，绝对不要硬编码！）
+          host: ${{ secrets.SERVER_HOST }}        # 服务器IP，如192.168.1.100
+          username: ${{ secrets.SERVER_USER }}    # 服务器账号，如Administrator
+          password: ${{ secrets.SERVER_PASS }}    # 服务器密码
+          port: 22                                # SSH端口（WinServer2012需先装OpenSSH）
+          # 超时时间（避免大文件传输中断）
+          timeout: 30s
+
+          # 远程执行的部署脚本（前端专属）
+          script: |
+            # 1. 定义部署目录（替换为你的服务器目录）
+            DEPLOY_DIR="D:\WebSite\Frontend\YourProject"
+            BACKUP_DIR="D:\WebSite\Backup\YourProject_$(Get-Date -Format 'yyyyMMddHHmmss')"
+            
+            # 2. 备份旧版本（方便回滚）
+            if (Test-Path $DEPLOY_DIR) {
+              New-Item -Path $BACKUP_DIR -ItemType Directory -Force
+              Copy-Item -Path "$DEPLOY_DIR\*" -Destination $BACKUP_DIR -Recurse -Force
+              Write-Host "Old version backed up to $BACKUP_DIR"
+            }
+            
+            # 3. 停止IIS站点（避免文件被占用）
+            Import-Module WebAdministration
+            Stop-Website -Name "YourFrontendSite"  # 替换为你的IIS站点名
+            
+            # 4. 清空部署目录（删除旧文件）
+            Remove-Item -Path "$DEPLOY_DIR\*" -Recurse -Force -ErrorAction SilentlyContinue
+            
+            # 5. 复制新构建的文件到服务器（dist是前端默认构建目录）
+            robocopy "${{ github.workspace }}\dist" "\\${{ secrets.SERVER_HOST }}\D$\WebSite\Frontend\YourProject" /E /COPYALL /R:3 /W:5 /NP
+            
+            # 6. 启动IIS站点
+            Start-Website -Name "YourFrontendSite"
+            
+            # 7. 验证部署结果
+            if (Test-Path "$DEPLOY_DIR\index.html") {
+              Write-Host "✅ Deployment success! Frontend files copied to $DEPLOY_DIR"
+            } else {
+              Write-Host "❌ Deployment failed! index.html not found"
+              exit 1
+            }
