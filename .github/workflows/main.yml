@@ -1,4 +1,4 @@
-# 工作流名称：前端构建并部署到Windows Server 2012（phpstudy+SSH最终版）
+# 工作流名称：前端构建并部署到Windows Server 2012（phpstudy+SSH+Bash方案）
 name: Frontend Build & Deploy to WinServer2012 (phpstudy)
 
 on:
@@ -76,24 +76,24 @@ jobs:
           timeout: 30s
 
           script: |
-            $DEPLOY_DIR = "C:\phpstudy_pro\WWW\project\vue_project\front"
-            $BACKUP_DIR = "C:\phpstudy_pro\WWW\project\vue_project\Backup\Project_$(Get-Date -Format 'yyyyMMddHHmmss')"
+            DEPLOY_DIR="/c/phpstudy_pro/WWW/project/vue_project/front"
+            BACKUP_DIR="/c/phpstudy_pro/WWW/project/vue_project/Backup/Project_$(date +%Y%m%d%H%M%S)"
             
-            if (Test-Path $DEPLOY_DIR) {
-              New-Item -Path $BACKUP_DIR -ItemType Directory -Force
-              Copy-Item -Path "$DEPLOY_DIR\*" -Destination $BACKUP_DIR -Recurse -Force
-              Write-Host "✅ 旧版本已备份到：$BACKUP_DIR"
-            }
+            if [ -d "$DEPLOY_DIR" ]; then
+              mkdir -p "$BACKUP_DIR"
+              cp -r "$DEPLOY_DIR"/* "$BACKUP_DIR"/
+              echo "✅ 旧版本已备份到：$BACKUP_DIR"
+            fi
             
-            Remove-Item -Path "$DEPLOY_DIR\*" -Recurse -Force -ErrorAction SilentlyContinue
-            Write-Host "✅ 部署目录已清空：$DEPLOY_DIR"
+            rm -rf "$DEPLOY_DIR"/*
+            echo "✅ 部署目录已清空：$DEPLOY_DIR"
             
-            Copy-Item -Path "${{ github.workspace }}\dist\*" -Destination $DEPLOY_DIR -Recurse -Force
-            Write-Host "✅ 前端文件已复制到服务器部署目录"
+            scp -r "${GITHUB_WORKSPACE}/dist"/* "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$DEPLOY_DIR"
+            echo "✅ 前端文件已复制到服务器部署目录"
             
-            if (Test-Path "$DEPLOY_DIR\index.html") {
-              Write-Host "🎉 部署成功！可通过phpstudy访问前端项目"
-            } else {
-              Write-Host "❌ 部署失败！未找到index.html文件"
+            if [ -f "$DEPLOY_DIR/index.html" ]; then
+              echo "🎉 部署成功！可通过phpstudy访问前端项目"
+            else
+              echo "❌ 部署失败！未找到index.html文件"
               exit 1
-            }
+            fi
