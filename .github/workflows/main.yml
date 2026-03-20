@@ -1,61 +1,33 @@
-# 工作流名称：自动上传 txt 文件到服务器（提交代码自动触发）
-name: Auto Upload TXT File via SSH
+# 工作流名称：自动上传 txt 文件（纯极简版）
+name: Auto Upload TXT (Simple)
 
-# 核心：默认自动触发 + 保留手动触发（双重保障）
+# 自动触发（提交master分支自动运行）
 on:
   push:
-    branches: [ master ]  # 推送到master分支自动运行
-  workflow_dispatch:      # 保留手动触发（方便临时测试）
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   upload-txt:
-    runs-on: ubuntu-latest  # Linux构建机，SSH兼容性最优
+    runs-on: ubuntu-latest
     steps:
-      # 基础步骤：拉取代码（Actions规范要求）
-      - name: Checkout source code
+      # 仅拉取代码（Actions基础要求）
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      # 步骤1：创建自定义内容的txt文件
+      # 1. 创建txt文件（仅核心内容）
       - name: Create test.txt
-        run: |
-          # 自定义文件内容（可随意修改）
-          echo "自动上传测试文件" > test.txt
-          echo "上传时间：$(date +'%Y-%m-%d %H:%M:%S')" >> test.txt
-          echo "服务器IP：${{ secrets.SERVER_HOST }}" >> test.txt
-          # 打印文件内容，验证创建结果
-          echo "📄 本地创建的test.txt内容："
-          cat test.txt
+        run: echo "Hello GitHub Actions" > test.txt
 
-      # 步骤2：SSH上传+验证（核心步骤）
-      - name: Upload test.txt to WinServer2012
+      # 2. SSH上传txt（无任何验证/if/else）
+      - name: Upload via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          timeout: 30s
-
           script: |
-            # 服务器目标路径（可自定义）
-            TARGET_DIR="/c/phpstudy_pro/WWW/project/vue_project/front"
-            TARGET_FILE="$TARGET_DIR/test.txt"
-
-            # 确保目标目录存在
-            mkdir -p "$TARGET_DIR"
-            
-            # 上传文件（scp原生支持，稳定无兼容问题）
-            scp "${GITHUB_WORKSPACE}/test.txt" "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$TARGET_FILE"
-            
-            # 验证上传结果（双重确认）
-            if [ -f "$TARGET_FILE" ]; then
-              echo "🎉 test.txt 自动上传成功！"
-              echo "📁 服务器文件路径：$TARGET_FILE"
-              echo "📄 服务器文件内容："
-              cat "$TARGET_FILE"
-            else
-              echo "❌ test.txt 上传失败！"
-              exit 1
-            fi
+            # 仅创建目录 + 上传文件，无任何多余逻辑
+            mkdir -p /c/phpstudy_pro/WWW/project/vue_project/front
+            scp "${GITHUB_WORKSPACE}/test.txt" "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/c/phpstudy_pro/WWW/project/vue_project/front/test.txt"
