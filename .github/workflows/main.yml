@@ -1,22 +1,31 @@
-# 工作流名称：自动创建+本地保存txt（无需SSH、零兼容问题、自动触发）
-name: Auto Create TXT (No SSH, Auto Trigger)
+# 工作流名称：100%自动化上传txt到服务器（无需手动操作）
+name: Auto Upload TXT to Server (Fully Auto)
 
-# 自动触发（提交master分支自动运行）
+# 自动触发（提交master分支就跑）
 on:
   push:
     branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  create-txt:
-    runs-on: windows-latest
+  upload:
+    runs-on: ubuntu-latest  # 彻底避开Windows平台兼容坑
     steps:
-      - name: Checkout
+      - name: Checkout代码
         uses: actions/checkout@v4
 
-      # 仅创建txt文件，自动触发，无任何SSH/第三方Action
-      - name: Create test.txt
-        run: |
-          echo "Hello GitHub Actions" > test.txt
-          echo "自动触发成功！$(date)" >> test.txt
-          cat test.txt
+      # 1. 自动创建txt文件
+      - name: 创建test.txt
+        run: echo "自动化上传成功！$(date)" > test.txt
+
+      # 2. 自动SSH上传到服务器（全程无手动操作）
+      - name: 自动上传到服务器
+        uses: easingthemes/ssh-deploy@main  # 用更稳定的SSH Action，无兼容问题
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # 可选，用密码的话注释掉
+          ARGS: "-rltgoDzvO --delete"
+          SOURCE: "test.txt"  # 要上传的文件
+          REMOTE_HOST: ${{ secrets.SERVER_HOST }} # 服务器IP
+          REMOTE_USER: ${{ secrets.SERVER_USER }} # 用户名（如administrator）
+          REMOTE_PASSWORD: ${{ secrets.SERVER_PASS }} # 服务器密码
+          TARGET: "/c/phpstudy_pro/WWW/project/vue_project/front/" # 服务器目标目录
