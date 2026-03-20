@@ -30,7 +30,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-zip
-          path: /
-          # 关键参数：禁用路径扁平化，强制保留dist根目录
-          flatten-paths: false
+          path: dist
           retention-days: 7
