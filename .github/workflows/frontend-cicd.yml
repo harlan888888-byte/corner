@@ -1,4 +1,4 @@
-name: Frontend CI/CD (Build & Deploy Separate)
+name: Frontend CI/CD (Windows Server 2012)
 on:
   push:
     branches: [ master ]
@@ -39,45 +39,21 @@ jobs:
         with:
           name: frontend-dist
           path: dist/
-      # 关键：用Windows Server 2012原生方式部署
-      - uses: appleboy/ssh-action@v1
+      - name: Deploy to Windows Server 2012
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 显式调用Windows Server 2012的PowerShell，用原生命令
+          # 核心：用source直接上传文件，绕开scp/sftp兼容问题
+          source: "dist/*"
+          target: "C:\phpstudy_pro\WWW\vue_project\temp_dist"
+          # 核心：用Windows原生cmd执行命令，彻底绕开powershell调用问题
           script: |
-            C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command "
-              # Windows Server 2012 部署路径（按你的实际路径修改）
-              $DEPLOY_DIR = 'C:\phpstudy_pro\WWW\vue_project\front'
-              $TEMP_DIR = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
-              $GITHUB_DIST = 'dist'
-
-              # 1. 强制创建/清空临时目录
-              if (Test-Path $TEMP_DIR) {
-                Remove-Item -Path $TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
-              }
-              New-Item -Path $TEMP_DIR -ItemType Directory -Force | Out-Null
-
-              # 2. 用SFTP上传文件（Windows Server 2012 OpenSSH原生支持）
-              sftp -o StrictHostKeyChecking=no $env:USERNAME@$env:COMPUTERNAME << EOF
-              cd $TEMP_DIR
-              put -r $GITHUB_DIST/* .
-              EOF
-
-              # 3. 强制清空部署目录（忽略文件占用）
-              if (Test-Path $DEPLOY_DIR) {
-                Get-ChildItem -Path $DEPLOY_DIR -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-              }
-
-              # 4. 用robocopy强制移动文件（Windows Server 2012原生，解决覆盖问题）
-              robocopy $TEMP_DIR $DEPLOY_DIR /E /MIR /R:3 /W:2 /NP
-
-              # 5. 验证部署结果：输出文件修改时间
-              Write-Host '部署完成！最新文件信息：'
-              Get-ChildItem -Path $DEPLOY_DIR | Select-Object Name, LastWriteTime
-
-              # 6. 清理临时目录
-              Remove-Item -Path $TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
-            "
+            # 1. 清空部署目录（cmd原生命令，Windows Server 2012原生支持）
+            del /f /s /q "C:\phpstudy_pro\WWW\vue_project\front\*"
+            # 2. 移动临时目录文件到部署目录（cmd原生命令）
+            move /y "C:\phpstudy_pro\WWW\vue_project\temp_dist\*" "C:\phpstudy_pro\WWW\vue_project\front\"
+            # 3. 删除临时目录
+            rmdir /s /q "C:\phpstudy_pro\WWW\vue_project\temp_dist"
