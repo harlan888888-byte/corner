@@ -1,4 +1,4 @@
-name: Frontend CI/CD（强制保留dist目录）
+name: Frontend CI/CD（仅保留dist目录）
 on:
   push:
     branches: [ master ]
@@ -25,14 +25,13 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       
-      # 关键修复：用**保留目录结构 + 明确指定根目录**
-      - name: 上传Artifacts（保留dist根目录）
+      # ========== 核心：用锚定语法强制保留dist文件夹 ==========
+      - name: 上传dist文件夹（仅保留dist根目录）
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-zip
-          # 核心语法：dist/** 表示包含dist目录本身 + 所有子文件
+          # 关键语法：./dist 锚定仓库根目录的dist文件夹，** 递归包含所有内容
           path: |
-            dist/**
-          # 强制保留目录结构（关键）
-          include-hidden-files: true
+            ./dist/**
+            !./dist/**/*
           retention-days: 7
