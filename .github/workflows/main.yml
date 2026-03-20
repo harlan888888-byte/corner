@@ -1,5 +1,5 @@
-# 工作流名称：自动上传 txt 文件（密码登录、零私钥、自动触发）
-name: Auto Upload TXT via SSH (Password Only)
+# 工作流名称：自动上传 test.txt（只传一个文件、自动触发、零多余文件）
+name: Auto Upload Only TXT (One File)
 
 # 自动触发（提交master分支自动运行）
 on:
@@ -14,19 +14,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 1. 创建test.txt（仅核心内容）
       - name: Create test.txt
         run: echo "Hello GitHub Actions" > test.txt
 
-      - name: Upload via SSH (Password Only)
+      # 2. SSH上传（彻底修正scp变量问题，只传一个文件）
+      - name: Upload via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          timeout: 30s
-
-          # 纯极简脚本，无任何if/else/验证
           script: |
-            mkdir -p /c/phpstudy_pro/WWW/project/vue_project/front
-            scp "${GITHUB_WORKSPACE}/test.txt" /c/phpstudy_pro/WWW/project/vue_project/front/test.txt
+            # 服务器端目标路径（和Windows路径完全一致）
+            TARGET="/c/phpstudy_pro/WWW/project/vue_project/front/test.txt"
+            
+            # 确保目录存在
+            mkdir -p "$(dirname "$TARGET")"
+            
+            # 核心：正确的scp命令，无变量名错误
+            scp -O test.txt "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$TARGET"
