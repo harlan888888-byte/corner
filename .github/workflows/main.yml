@@ -1,31 +1,30 @@
-# 工作流名称：仅验证 SSH 连通性（跳过所有构建步骤）
-name: Only Test SSH Connection
+# 工作流名称：自动验证 SSH 连通性（提交代码自动运行）
+name: Auto Test SSH Connection
 
 on:
-  workflow_dispatch:  # 仅手动触发，避免自动执行
+  push:
+    branches: [ master ]  # 推送到master分支自动运行
+  workflow_dispatch:      # 保留手动触发（可选）
 
 jobs:
   test-ssh:
-    runs-on: ubuntu-latest  # 用Linux构建机，彻底解决平台兼容问题
+    runs-on: ubuntu-latest
     steps:
-      # 仅拉取代码（必填步骤，无实际作用，只为满足Actions规范）
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 核心：仅验证SSH连通性，不执行任何部署操作
       - name: Test SSH Connection to WinServer2012
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.SERVER_HOST }}    # 你的服务器IP/域名
-          username: ${{ secrets.SERVER_USER }}# 服务器用户名（如Administrator）
-          password: ${{ secrets.SERVER_PASS }}# 服务器密码
-          port: 22                            # SSH端口（默认22）
-          timeout: 30s                        # 超时时间
-          command_timeout: 10s                # 命令执行超时
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASS }}
+          port: 22
+          timeout: 30s
+          command_timeout: 10s
 
-          # 仅执行简单命令验证连通，无任何文件操作
           script: |
             echo "✅ SSH 连接成功！服务器主机名：$(hostname)"
             echo "✅ 当前服务器用户：$(whoami)"
