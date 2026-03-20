@@ -1,4 +1,4 @@
-name: Frontend CI/CD（精准匹配需求版）
+name: Frontend CI/CD（100%保留dist目录）
 on:
   push:
     branches: [ master ]
@@ -25,10 +25,19 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       
-      # ========== 核心：直接上传dist文件夹，关闭Artifacts的路径扁平化 ==========
-      - name: 上传dist文件夹（解压即dist/）
-        uses: actions/upload-artifact@v4
+      # ========== 核心：手动打包dist为zip，强制保留dist根目录 ==========
+      - name: 手动打包dist（解压即dist/）
+        run: |
+          # 进入dist的上级目录（仓库根目录）
+          cd $GITHUB_WORKSPACE
+          # 打包dist文件夹，指定dist为压缩包根目录（关键！）
+          zip -r frontend-dist-zip.zip dist/
+          # 验证打包结果（日志里能看到dist/目录）
+          unzip -l frontend-dist-zip.zip
+      
+      # 上传手动打包好的zip（解压后直接是dist/）
+      - uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-zip
-          path: .
+          path: $GITHUB_WORKSPACE/frontend-dist-zip.zip
           retention-days: 7
