@@ -1,4 +1,4 @@
-name: Frontend Deploy (Only)
+name: Frontend Deploy
 on:
   workflow_dispatch:
 jobs:
@@ -10,6 +10,9 @@ jobs:
         with:
           name: frontend-dist
           path: dist/
+          # 核心：允许跨workflow下载最新产物（关键！）
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.inputs.run_id || github.run_id }}
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1
         with:
