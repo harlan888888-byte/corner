@@ -22,7 +22,6 @@ jobs:
       - name: 自动上传到服务器
         uses: easingthemes/ssh-deploy@main  # 用更稳定的SSH Action，无兼容问题
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # 可选，用密码的话注释掉
           ARGS: "-rltgoDzvO --delete"
           SOURCE: "test.txt"  # 要上传的文件
           REMOTE_HOST: ${{ secrets.SERVER_HOST }} # 服务器IP
