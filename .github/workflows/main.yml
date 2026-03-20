@@ -1,4 +1,4 @@
-# 工作流名称：前端构建并部署到Windows Server 2012（phpstudy+pnpm修复版）
+# 工作流名称：前端构建并部署到Windows Server 2012（phpstudy+SSH最终无错版）
 name: Frontend Build & Deploy to WinServer2012 (phpstudy)
 
 on:
@@ -12,29 +12,24 @@ jobs:
   deploy:
     runs-on: windows-latest
     steps:
-      # 步骤1：拉取代码（必须第一个）
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 步骤2：安装Node.js 22（先装Node，再装pnpm）
       - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-          # 注意：这里cache先设为npm，pnpm缓存由pnpm/action-setup处理
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
-      # 步骤3：安装pnpm（必须在Setup Node之后，Install dependencies之前）
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9
           run_install: false
 
-      # 步骤4：安装依赖（彻底跳过Puppeteer Chrome下载）
       - name: Install dependencies
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
@@ -45,16 +40,14 @@ jobs:
         shell: pwsh
         timeout-minutes: 10
 
-      # 步骤5：构建前端项目
       - name: Build production package
         run: |
           pnpm run build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
-      # 步骤6：SSH部署到服务器
       - name: Deploy to WinServer2012 via SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v2
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
