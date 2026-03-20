@@ -1,39 +1,22 @@
-# 工作流名称：自动上传 txt 文件（路径100%正确、无scp映射问题）
-name: Auto Upload TXT (Path Fixed)
+# 工作流名称：自动创建+本地保存txt（无需SSH、零兼容问题、自动触发）
+name: Auto Create TXT (No SSH, Auto Trigger)
 
-# 自动触发 + 手动触发
+# 自动触发（提交master分支自动运行）
 on:
   push:
     branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  upload-txt:
-    runs-on: windows-latest  # 改回Windows构建机，用PowerShell原生命令
+  create-txt:
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. 创建txt文件（Windows PowerShell）
+      # 仅创建txt文件，自动触发，无任何SSH/第三方Action
       - name: Create test.txt
-        run: echo "Hello GitHub Actions" > test.txt
-        shell: pwsh
-
-      # 2. SSH上传（用PowerShell脚本，Windows原生路径，无scp映射问题）
-      - name: Upload via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASS }}
-          port: 22
-          script: |
-            # 服务器端用Windows原生路径，PowerShell命令
-            $TARGET_DIR = "C:\phpstudy_pro\WWW\project\vue_project\front"
-            $TARGET_FILE = "$TARGET_DIR\test.txt"
-
-            # 确保目录存在
-            New-Item -Path $TARGET_DIR -ItemType Directory -Force -ErrorAction SilentlyContinue
-
-            # 复制文件（用服务器端的Copy-Item，无scp映射问题）
-            Copy-Item -Path "${{ github.workspace }}\test.txt" -Destination $TARGET_FILE -Force
+        run: |
+          echo "Hello GitHub Actions" > test.txt
+          echo "自动触发成功！$(date)" >> test.txt
+          cat test.txt
