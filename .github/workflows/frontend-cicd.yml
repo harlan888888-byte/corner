@@ -46,14 +46,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 核心：用source直接上传文件，绕开scp/sftp兼容问题
+          # 关键：用双反斜杠\\表示Windows路径，避免YAML转义错误
           source: "dist/*"
-          target: "C:\phpstudy_pro\WWW\vue_project\temp_dist"
-          # 核心：用Windows原生cmd执行命令，彻底绕开powershell调用问题
+          target: "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist"
+          # 关键：脚本块用单引号包裹，禁用YAML转义，cmd命令用双反斜杠
           script: |
-            # 1. 清空部署目录（cmd原生命令，Windows Server 2012原生支持）
-            del /f /s /q "C:\phpstudy_pro\WWW\vue_project\front\*"
-            # 2. 移动临时目录文件到部署目录（cmd原生命令）
-            move /y "C:\phpstudy_pro\WWW\vue_project\temp_dist\*" "C:\phpstudy_pro\WWW\vue_project\front\"
-            # 3. 删除临时目录
-            rmdir /s /q "C:\phpstudy_pro\WWW\vue_project\temp_dist"
+            del /f /s /q "C:\\phpstudy_pro\\WWW\\vue_project\\front\\*"
+            move /y "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist\\*" "C:\\phpstudy_pro\\WWW\\vue_project\\front\\"
+            rmdir /s /q "C:\\phpstudy_pro\\WWW\\vue_project\\temp_dist"
