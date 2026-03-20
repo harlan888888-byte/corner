@@ -28,6 +28,6 @@ jobs:
       # 直接上传dist文件夹，Artifacts自动打包成单层ZIP，无套娃
       - uses: actions/upload-artifact@v4
         with:
-          name: frontend-dist-zip
+          name: frontend-dist
           path: dist  # 直接传文件夹，不是ZIP包
           retention-days: 7
