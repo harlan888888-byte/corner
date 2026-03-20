@@ -1,4 +1,4 @@
-name: Frontend CI/CD（仅构建打包，不上传服务器）
+name: Frontend CI/CD（单层ZIP版）
 on:
   push:
     branches: [ master ]
@@ -25,12 +25,9 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       
-      # 打包dist为ZIP，上传到GitHub Artifacts
-      - name: 打包并上传ZIP包
-        run: |
-          zip -r frontend-build.zip dist/
+      # 直接上传dist文件夹，Artifacts自动打包成单层ZIP，无套娃
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-zip
-          path: ./frontend-build.zip
+          path: dist/  # 直接传文件夹，不是ZIP包
           retention-days: 7
