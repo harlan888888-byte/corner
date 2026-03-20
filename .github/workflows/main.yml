@@ -41,8 +41,10 @@ jobs:
           $env:PUPPETEER_SKIP_DOWNLOAD = "true"
           $env:PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
           npm install --legacy-peer-deps --no-audit --no-fund
+          pnpm store prune
+          pnpm install --frozen-lockfile --legacy-peer-deps --no-audit --no-fund
         shell: pwsh  
-        timeout-minutes: 5  # 最多等5分钟，超时自动终止
+        timeout-minutes: 10  # 最多等5分钟，超时自动终止
         
       # 步骤4：构建前端项目
       - name: Build production package
