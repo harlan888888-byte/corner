@@ -46,20 +46,18 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 1. 用原生source/target上传文件，绕开所有传输坑
-          source: dist/
-          target: 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
-          # 2. 用PowerShell执行，单引号包裹路径，彻底绕开shell解析和YAML转义
           script: |
-            $deployDir = 'C:\phpstudy_pro\WWW\vue_project\front'
-            $tempDir = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
+            # 1. 用scp上传文件（Windows OpenSSH原生支持，无参数错误）
+            scp -r dist/* C:\phpstudy_pro\WWW\vue_project\temp_dist\
+            # 2. 用PowerShell执行文件操作（显式调用，Windows Server 2012原生支持）
+            C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command "
+              \$deployDir = 'C:\phpstudy_pro\WWW\vue_project\front'
+              \$tempDir = 'C:\phpstudy_pro\WWW\vue_project\temp_dist'
 
-            # 强制清空部署目录
-            Remove-Item -Path "$deployDir\*" -Recurse -Force -ErrorAction SilentlyContinue
-            # 强制移动文件
-            Move-Item -Path "$tempDir\*" -Destination $deployDir -Force
-            # 删除临时目录
-            Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
-          # 3. 关键：指定执行shell为powershell.exe，彻底绕开Linux shell解析
-          command_timeout: 30s
-          debug: false
+              # 强制清空部署目录
+              Remove-Item -Path \$deployDir\* -Recurse -Force -ErrorAction SilentlyContinue
+              # 强制移动文件
+              Move-Item -Path \$tempDir\* -Destination \$deployDir -Force
+              # 删除临时目录
+              Remove-Item -Path \$tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            "
