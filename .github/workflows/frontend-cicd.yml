@@ -1,4 +1,4 @@
-name: Frontend CI/CD（终极极速版）
+name: Frontend CI/CD（Windows Server 极速版）
 on:
   push:
     branches: [ master ]
@@ -38,29 +38,35 @@ jobs:
           ls -la $GITHUB_WORKSPACE/dist/ || echo "dist目录不存在！"
 
       # 3. 安装依赖（不变）
-      - name: 安装sshpass
+      - name: 安装sshpass和zip
         run: sudo apt update && sudo apt install -y sshpass zip
 
-      # 4. 核心：打包成单个ZIP + 传输 + 服务器解压（极速）
-      - name: 部署到服务器（终极极速版）
+      # 4. 核心修复：适配Windows Server路径 + 确保目录存在
+      - name: 部署到服务器（修复路径+极速）
         run: |
           # ========== 步骤1：构建机打包（1秒完成） ==========
           cd $GITHUB_WORKSPACE
-          zip -q -r dist.zip dist/  # -q：静默打包，-r：递归打包
+          zip -q -r dist.zip dist/
 
-          # ========== 步骤2：传输单个ZIP包（核心提速） ==========
-          # 单个文件传输，握手仅1次，体积压缩80%+
+          # ========== 步骤2：先在服务器创建目录（关键：用Windows原生命令） ==========
+          # 用PowerShell创建C:\test目录，避免路径不存在
+          sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "powershell -Command \"New-Item -Path C:\test -ItemType Directory -Force\""
+
+          # ========== 步骤3：传输ZIP包（用SSH映射路径 /c/test，适配Windows） ==========
           sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -P 22 \
             $GITHUB_WORKSPACE/dist.zip \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:C:/test/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/c/test/
 
-          # ========== 步骤3：服务器端解压（Windows原生命令，无依赖） ==========
-          # 用PowerShell解压，覆盖旧文件，删除压缩包
+          # ========== 步骤4：服务器解压+清理（纯Windows PowerShell命令） ==========
           sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "powershell -Command \"\
+              # 解压ZIP包（覆盖旧文件）
               Expand-Archive -Path C:\test\dist.zip -DestinationPath C:\test -Force; \
-              Remove-Item C:\test\dist.zip -Force; \
-              # 把dist内的文件移到/test根目录，删除dist文件夹
-              Get-ChildItem C:\test\dist\* | Move-Item -Destination C:\test -Force; \
-              Remove-Item C:\test\dist -Recurse -Force \
+              # 删除ZIP包
+              Remove-Item -Path C:\test\dist.zip -Force; \
+              # 把dist内的文件移动到C:\test根目录
+              Get-ChildItem -Path C:\test\dist\* | Move-Item -Destination C:\test -Force; \
+              # 删除空的dist文件夹
+              Remove-Item -Path C:\test\dist -Recurse -Force \
             \""
