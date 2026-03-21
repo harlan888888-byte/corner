@@ -56,8 +56,7 @@ jobs:
           local_path: "./${{ env.PACKAGE_NAME }}"
           remote_path: "/test/"
 
-      # 新增核心步骤：SSH 远程执行 CMD 解压命令（适配 Windows 服务器）
-      - name: 远程解压 tar.gz 包（Windows CMD）
+      - name: 远程解压 tar.gz 包（Windows CMD 修复版）
         if: ${{ !github.event.inputs.deploy_only }}
         uses: appleboy/ssh-action@master
         with:
@@ -65,11 +64,18 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # Windows CMD 解压命令（适配你的服务器路径）
+          # 关键：用 echo 输出真实执行的命令，强制显示日志，且包名直接拼接
           script: |
-            # 切换到压缩包所在目录（/test/ 对应 C:\test\）
-            cd C:\phpstudy_pro\WWW\project\vue_project\front\test
-            # 执行 CMD 解压命令（解压到你的前端项目目录）
+            @echo on
+            REM 切换到正确目录（你确认过的路径）
+            cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test
+            REM 输出当前目录和文件列表（排查包是否存在）
+            dir
+            REM 输出要解压的包名（验证变量传递）
+            echo 要解压的包名：${{ env.PACKAGE_NAME }}
+            REM 执行解压（加 /d 确保切换盘符，避免目录切换失败）
             tar -zxvf ${{ env.PACKAGE_NAME }}
-            # 可选：解压后删除压缩包（避免服务器文件堆积）
-            # del ${{ env.PACKAGE_NAME }}
+            REM 解压后输出文件列表（验证是否成功）
+            dir dist
+            REM 可选：删除压缩包
+            REM del ${{ env.PACKAGE_NAME }}
