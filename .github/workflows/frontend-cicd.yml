@@ -23,17 +23,17 @@ jobs:
         if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'pnpm'  # 缓存pnpm依赖（需先安装pnpm才能生效）
+          node-version: 22  # 建议用稳定版如20，22可能是手误（当前Node 22最新是22.1.0）
+          cache: 'pnpm'
 
-      # 关键修正：把pnpm安装步骤移到setup-node之后，且在install之前
-      - name: 安装 pnpm
+      # 核心修复：不用pnpm/action-setup，直接用npm全局装pnpm（100%能找到）
+      - name: 手动安装pnpm（全局）
         if: ${{ !github.event.inputs.deploy_only }}
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-          # 显式指定pnpm安装路径，确保加入PATH
-          run_install: false
+        run: npm install -g pnpm
+
+      - name: 验证pnpm安装
+        if: ${{ !github.event.inputs.deploy_only }}
+        run: pnpm --version  # 输出版本号，确认安装成功
 
       - name: 安装项目依赖
         if: ${{ !github.event.inputs.deploy_only }}
