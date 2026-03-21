@@ -50,3 +50,4 @@ jobs:
           sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /test"
           # 推送文件（构建机 → 服务器）
           sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -r -P 22 $GITHUB_WORKSPACE/dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/test/
+          
