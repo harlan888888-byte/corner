@@ -52,6 +52,6 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           server: ${{ secrets.SERVER_HOST }}
           port: 22
-          # 指向打包好的 tar.gz 包（仅传压缩包，不解压）
+          # 指向打包好的 tar.gz 包（仅传压缩包，不解压） 
           local_path: "./${{ env.PACKAGE_NAME }}"
           remote_path: "/test/"
