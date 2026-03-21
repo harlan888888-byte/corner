@@ -1,4 +1,4 @@
-name: Frontend CI/CD（Windows Server 最终可用版）
+name: Frontend CI/CD（SMB极速无报错版）
 on:
   push:
     branches: [ master ]
@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1. 构建环节（不变）
       - name: 安装依赖并构建
         if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
@@ -30,19 +31,32 @@ jobs:
       - run: pnpm run build
         if: ${{ !github.event.inputs.deploy_only }}
 
+      # 2. 验证dist文件（不变）
       - name: 验证dist文件
         run: |
           echo "=== 查看dist目录 ==="
           ls -la $GITHUB_WORKSPACE/dist/ || echo "dist目录不存在！"
 
-      - name: 安装sshpass
-        run: sudo apt update && sudo apt install -y sshpass
+      # 3. 安装SMB客户端（Ubuntu构建机）
+      - name: 安装SMB客户端
+        run: sudo apt update && sudo apt install -y cifs-utils
 
-      # 核心：纯scp传输，不依赖服务器任何工具，彻底规避powershell报错
-      - name: 部署到服务器（极简无依赖版）
+      # 4. 核心：挂载Windows共享目录 + 一次性复制文件（极速）
+      - name: 部署到服务器（SMB极速版）
         run: |
-          # 1. 直接用scp递归传输dist（一次性传输，无压缩包，纯密码）
-          # 目标路径：直接写你项目的SSH根目录路径（比如 /corner，对应你项目根目录）
-          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -C -r -P 22 \
-            $GITHUB_WORKSPACE/dist/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/corner/
+          # 第一步：创建本地挂载目录
+          mkdir -p /mnt/win_share
+
+          # 第二步：挂载Windows服务器共享目录（关键！）
+          # 替换：
+          # //服务器IP/共享文件夹名 → 你的Windows共享路径（比如 //1.2.3.4/corner）
+          # username=你的Windows用户名
+          # password=你的Windows密码
+          sudo mount -t cifs //${{ secrets.SERVER_HOST }}/corner /mnt/win_share \
+            -o username=${{ secrets.SERVER_USER }},password=${{ secrets.SERVER_PASS }},vers=3.0,dir_mode=0777,file_mode=0777
+
+          # 第三步：一次性复制dist内所有文件到挂载目录（不是逐个传！）
+          cp -r $GITHUB_WORKSPACE/dist/* /mnt/win_share/
+
+          # 第四步：卸载挂载目录
+          sudo umount /mnt/win_share
