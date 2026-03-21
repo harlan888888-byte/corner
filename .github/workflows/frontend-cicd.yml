@@ -1,4 +1,4 @@
-name: Frontend CI/CD（确保文件传到服务器）
+name: Frontend CI/CD（SCP极致优化版）
 on:
   push:
     branches: [ master ]
@@ -14,9 +14,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # 1. 拉取代码
       - uses: actions/checkout@v4
 
-      # 构建环节
+      # 2. 构建环节（仅非"仅部署"时执行）
       - name: 安装依赖并构建
         if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
@@ -31,7 +32,7 @@ jobs:
       - run: pnpm run build
         if: ${{ !github.event.inputs.deploy_only }}
 
-      # 关键：检查dist是否存在且有内容
+      # 3. 关键：检查dist是否存在且有内容（排查空文件问题）
       - name: 验证dist文件
         run: |
           echo "=== 查看dist目录 ==="
@@ -39,15 +40,34 @@ jobs:
           echo "=== 查看工作目录 ==="
           ls -la $GITHUB_WORKSPACE/
 
-      # 安装sshpass（自动填密码）
+      # 4. 安装sshpass（自动填充密码）
       - name: 安装sshpass
         run: sudo apt update && sudo apt install -y sshpass
 
-      # 核心：构建机直接推文件到服务器（确保有内容）
-      - name: 部署到服务器（真实推送）
+      # 5. 核心优化：SSH连接复用 + SCP压缩传输（解决慢的核心）
+      - name: 部署到服务器（SCP极致优化版）
         run: |
-          # 强制创建服务器目标目录
+          # 第一步：配置SSH连接复用（一次握手，多次传输，避免重复认证）
+          mkdir -p ~/.ssh
+          # 写入SSH复用配置（覆盖原有配置，避免冲突）
+          cat > ~/.ssh/config << EOF
+          Host *
+            ControlMaster auto
+            ControlPath ~/.ssh/ssh_mux_%h_%p_%r
+            ControlPersist 60s  # 连接保持60秒，足够完成传输
+            Compression yes      # 全局开启SSH压缩
+          EOF
+          # 配置文件权限（SSH要求必须600，否则报错）
+          chmod 600 ~/.ssh/config
+
+          # 第二步：创建服务器目标目录（复用上面的SSH连接，无额外握手）
           sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /test"
-          # 推送文件（构建机 → 服务器）
-          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -r -P 22 $GITHUB_WORKSPACE/dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/test/
-          
+
+          # 第三步：压缩+递归传输dist（核心优化）
+          # -C：开启传输压缩（小文件体积减半）
+          # -r：递归传输目录
+          # -o StrictHostKeyChecking=no：跳过服务器指纹验证
+          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -C -r -P 22 $GITHUB_WORKSPACE/dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/test/
+
+          # 可选：清理SSH复用连接（避免残留）
+          sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} -O exit || true
