@@ -15,14 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: 远程解压 1.tar.gz
+
+      - name: 唤起CMD+切换目录+生成验证文件
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 关键：换成你 Git 里 tar.exe 的真实绝对路径
           script: |
-            cmd /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && C:\Program Files\Git\usr\bin\tar.exe -zxvf 1.tar.gz"
+            cmd /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && echo 【执行时间】%date% %time% > cmd_verify.txt && echo 【当前目录】%cd% >> cmd_verify.txt && echo 【验证成功】CMD已唤起并切换到目标目录 >> cmd_verify.txt"
