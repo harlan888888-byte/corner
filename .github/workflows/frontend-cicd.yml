@@ -14,50 +14,38 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 拉取代码
-      - name: 拉取仓库代码
-        uses: actions/checkout@v4
+      # 1. 拉取代码（无论是否仅部署，都需要拉取）
+      - uses: actions/checkout@v4
 
-      # 2. 构建前端项目（仅当非「仅部署」时执行）
-      - name: 安装 Node.js 环境
+      # 2. 安装依赖并构建（整体受控于 if 条件，和你验证过的结构一致）
+      - name: 安装依赖并构建
         if: ${{ !github.event.inputs.deploy_only }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22  # 建议用稳定版如20，22可能是手误（当前Node 22最新是22.1.0）
-          cache: 'pnpm'
-
-      # 核心修复：不用pnpm/action-setup，直接用npm全局装pnpm（100%能找到）
-      - name: 手动安装pnpm（全局）
-        if: ${{ !github.event.inputs.deploy_only }}
-        run: npm install -g pnpm
-
-      - name: 验证pnpm安装
-        if: ${{ !github.event.inputs.deploy_only }}
-        run: pnpm --version  # 输出版本号，确认安装成功
-
-      - name: 安装项目依赖
-        if: ${{ !github.event.inputs.deploy_only }}
-        run: pnpm install --frozen-lockfile
-
-      - name: 构建前端产物
-        if: ${{ !github.event.inputs.deploy_only }}
-        run: pnpm run build
-
-      # 3. 打包 dist 为 tar.gz（带时间戳）
-      - name: 打包 dist 为 tar.gz
-        if: ${{ !github.event.inputs.deploy_only }}
+        # 这里用 && 串联所有构建步骤，保证在同一个 step 里执行，路径不会乱
         run: |
+          # 第一步：安装 Node.js 24（和你指定的版本一致）
+          curl -fsSL https://fnm.vercel.app/install | bash
+          export PATH="$HOME/.local/share/fnm:$PATH"
+          fnm install 24 && fnm use 24
+          # 第二步：安装最新版 pnpm
+          npm install -g pnpm
+          # 第三步：安装项目依赖
+          pnpm install
+          # 第四步：构建前端产物
+          pnpm run build
+          # 第五步：打包 dist 为 tar.gz（带时间戳，避免覆盖）
           PACKAGE_NAME="dist-$(date +%Y%m%d%H%M).tar.gz"
           tar -zcvf $PACKAGE_NAME ./dist
+          # 把包名存入环境变量，供后续部署使用
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
 
-      # 4. SFTP传输tar.gz到Windows服务器
-      - name: SFTP传输tar.gz到Windows服务器
+      # 3. SFTP 部署 tar.gz 包到 Windows 服务器
+      - name: SFTP 部署到 Windows 服务器
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           server: ${{ secrets.SERVER_HOST }}
           port: 22
+          # 指向打包好的 tar.gz 包（仅传压缩包，不解压）
           local_path: "./${{ env.PACKAGE_NAME }}"
           remote_path: "/test/"
