@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 核心：用 Linux Shell 语法执行 Windows 解压命令
+      # 核心：用单引号包裹脚本，强制按行执行
       - name: 远程解压 1.tar.gz 到当前目录
         uses: appleboy/ssh-action@master
         with:
@@ -24,11 +24,15 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 方案1：用 Git Bash/OpenSSH 兼容的 Linux 路径 + tar 命令
+          # 方案1：用 tar 命令（Git Bash/OpenSSH 环境）
           script: |
+            '
             cd /c/phpstudy_pro/WWW/project/vue_project/front/test
             tar -zxvf 1.tar.gz
-          # 方案2：若tar失效，用7-Zip（Linux路径写法）
+            '
+          # 方案2：若tar失效，用7-Zip（取消注释使用）
           # script: |
+          #   '
           #   cd /c/phpstudy_pro/WWW/project/vue_project/front/test
           #   "/c/Program Files/7-Zip/7z.exe" x 1.tar.gz -y
+          #   '
