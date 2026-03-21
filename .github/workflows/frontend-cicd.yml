@@ -14,17 +14,21 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 仅拉取代码（Action基础要求，无实际业务作用）
       - uses: actions/checkout@v4
 
-      # 核心：远程执行解压 1.tar.gz 命令
-      - name: 远程解压服务器的 1.tar.gz 到当前目录
+      # 核心：用 Linux Shell 语法执行 Windows 解压命令
+      - name: 远程解压 1.tar.gz 到当前目录
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 强制CMD执行，精准解压 1.tar.gz 到 test 目录（当前目录）
+          # 方案1：用 Git Bash/OpenSSH 兼容的 Linux 路径 + tar 命令
           script: |
-            cmd.exe /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && tar -zxvf 1.tar.gz"
+            cd /c/phpstudy_pro/WWW/project/vue_project/front/test
+            tar -zxvf 1.tar.gz
+          # 方案2：若tar失效，用7-Zip（Linux路径写法）
+          # script: |
+          #   cd /c/phpstudy_pro/WWW/project/vue_project/front/test
+          #   "/c/Program Files/7-Zip/7z.exe" x 1.tar.gz -y
