@@ -59,7 +59,7 @@ jobs:
           server: ${{ secrets.SERVER_HOST }}
           port: 22
           local_path: "./${{ env.PACKAGE_NAME }}"
-          remote_path: "/C:/phpstudy_pro/WWW/project/vue_project/front/dist/"
+          remote_path: "/C:/phpstudy_pro/WWW/project/vue_project/front/"
           sftp_only: true  # 强制仅SFTP，避免SSH干扰
           delete_remote_files: false  # 禁止删除远程文件，避免误操作 
 
@@ -72,4 +72,4 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           port: 22
           script: |
-            cmd /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\dist && tar -zxvf ${{ env.PACKAGE_NAME }}"
+            cmd /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front && tar -zxvf ${{ env.PACKAGE_NAME }}"
