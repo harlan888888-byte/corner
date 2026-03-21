@@ -1,12 +1,12 @@
-name: Frontend CI/CD（精准匹配需求版）
+name: Frontend CI/CD（纯密码+无压缩包+直观路径）
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   workflow_dispatch:
     inputs:
       deploy_only:
         type: boolean
-        description: '仅执行部署（跳过构建）'
+        description: "仅执行部署（跳过构建）"
         required: false
         default: false
 
@@ -14,10 +14,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # ===== 1. 拉取代码（即使仅部署也需要拉取，或可优化为仅下载制品）=====
+      # 1. 拉取代码
       - uses: actions/checkout@v4
 
-      # ===== 2. 构建环节（仅当不选「仅部署」时执行）=====
+      # 2. 构建环节（仅非"仅部署"时执行）
       - name: 安装依赖并构建
         if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
@@ -32,20 +32,23 @@ jobs:
       - run: pnpm run build
         if: ${{ !github.event.inputs.deploy_only }}
 
-      # ===== 3. 核心：直接通过SSH推送dist内文件到服务器 =====
-      - name: 部署到服务器（直接推送文件）
-        uses: appleboy/scp-action@master # 轻量的SCP工具，无需压缩
+      # 3. 核心：纯密码登录 + 无压缩包 + 直观的源/目标路径
+      - name: 部署到服务器（无压缩包直接传）
+        uses: appleboy/ssh-action@master
         with:
-          # 服务器基础信息（建议存在GitHub Secrets中，避免明文）
-          host: ${{ secrets.SERVER_HOST }} # 服务器IP/域名
-          username: ${{ secrets.SERVER_USER }} # 服务器用户名（如root/ubuntu）
-          password: ${{ secrets.SERVER_PASS }} # 服务器密码（或用密钥更安全）
+          # 基础认证（纯密码）
+          host: ${{ secrets.SERVER_HOST }}      # 服务器IP
+          username: ${{ secrets.SERVER_USER }}  # 服务器用户名
+          password: ${{ secrets.SERVER_PASS }}  # 服务器密码（Secrets名：SERVER_PASS）
+          port: 22                              # SSH端口（默认22）
+          timeout: 60s
 
-          # 关键：指定要推送的文件（dist/* 表示dist内的所有内容）
-          source: 'dist/*' # 本地构建后的文件路径（dist内的所有内容）
-          target: '/test' # 服务器目标目录（根据你的实际路径修改）
-
-          # 可选配置（提升部署体验）
-          overwrite: true # 覆盖服务器同名文件
-          strip_components: 1 # 去掉dist层级，直接把内容放到target目录
-          timeout: 60s # 超时时间
+          # 核心命令：原生scp（对应source/target，无压缩包）
+          script: |
+            # 确保服务器目标目录存在（不存在则创建）
+            mkdir -p /test
+            # 原生scp命令 = source: dist/* + target: /test
+            # 解释：
+            # $GITHUB_WORKSPACE/dist/* → 本地源路径（对应source: dist/*）
+            # /test/ → 服务器目标路径（对应target: /test）
+            scp -r -P 22 $GITHUB_WORKSPACE/dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/test/
