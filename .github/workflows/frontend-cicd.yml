@@ -14,68 +14,17 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 拉取代码（无论是否仅部署，都需要拉取）
+      # 仅拉取代码（Action基础要求，无实际业务作用）
       - uses: actions/checkout@v4
 
-      # 2. 安装依赖并构建（整体受控于 if 条件，和你验证过的结构一致）
-      # 构建环节
-      - name: 安装依赖并构建
-        if: ${{ !github.event.inputs.deploy_only }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - uses: pnpm/action-setup@v4
-        if: ${{ !github.event.inputs.deploy_only }}
-        with:
-          version: latest
-      - run: pnpm install
-        if: ${{ !github.event.inputs.deploy_only }}
-      - run: pnpm run build
-        if: ${{ !github.event.inputs.deploy_only }}
-
-      # 新增步骤：打包 dist 为 tar.gz（仅在非仅部署时执行）
-      - name: 打包 dist 为 tar.gz
-        if: ${{ !github.event.inputs.deploy_only }}
-        run: |
-          # 生成带时间戳的包名，避免覆盖服务器旧文件
-          PACKAGE_NAME="dist-$(date +%Y%m%d%H%M).tar.gz"
-          # 打包 dist 目录为 tar.gz 压缩包
-          tar -zcvf $PACKAGE_NAME ./dist
-          # 将包名存入环境变量，供后续部署步骤使用
-          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
-
-      # 3. SFTP 部署 tar.gz 包到 Windows 服务器
-      - name: SFTP 部署到 Windows 服务器
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASS }}
-          server: ${{ secrets.SERVER_HOST }}
-          port: 22
-          # 指向打包好的 tar.gz 包（仅传压缩包，不解压）
-          local_path: "./${{ env.PACKAGE_NAME }}"
-          remote_path: "/test/"
-
-      - name: 远程解压 tar.gz 包（Windows CMD 修复版）
-        if: ${{ !github.event.inputs.deploy_only }}
+      # 核心：远程执行解压 1.tar.gz 命令
+      - name: 远程解压服务器的 1.tar.gz 到当前目录
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 关键：用 echo 输出真实执行的命令，强制显示日志，且包名直接拼接
+          # 强制CMD执行，精准解压 1.tar.gz 到 test 目录（当前目录）
           script: |
-            @echo on
-            REM 切换到正确目录（你确认过的路径）
-            cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test
-            REM 输出当前目录和文件列表（排查包是否存在）
-            dir
-            REM 输出要解压的包名（验证变量传递）
-            echo 要解压的包名：${{ env.PACKAGE_NAME }}
-            REM 执行解压（加 /d 确保切换盘符，避免目录切换失败）
-            tar -zxvf ${{ env.PACKAGE_NAME }}
-            REM 解压后输出文件列表（验证是否成功）
-            dir dist
-            REM 可选：删除压缩包
-            REM del ${{ env.PACKAGE_NAME }}
+            cmd.exe /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && tar -zxvf 1.tar.gz"
