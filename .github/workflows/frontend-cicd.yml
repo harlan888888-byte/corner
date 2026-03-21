@@ -55,3 +55,21 @@ jobs:
           # 指向打包好的 tar.gz 包（仅传压缩包，不解压）
           local_path: "./${{ env.PACKAGE_NAME }}"
           remote_path: "/test/"
+
+      # 新增核心步骤：SSH 远程执行 CMD 解压命令（适配 Windows 服务器）
+      - name: 远程解压 tar.gz 包（Windows CMD）
+        if: ${{ !github.event.inputs.deploy_only }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASS }}
+          port: 22
+          # Windows CMD 解压命令（适配你的服务器路径）
+          script: |
+            # 切换到压缩包所在目录（/test/ 对应 C:\test\）
+            cd C:\phpstudy_pro\WWW\project\vue_project\front\test
+            # 执行 CMD 解压命令（解压到你的前端项目目录）
+            tar -zxvf ${{ env.PACKAGE_NAME }}
+            # 可选：解压后删除压缩包（避免服务器文件堆积）
+            # del ${{ env.PACKAGE_NAME }}
