@@ -23,6 +23,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
-          # 完全用CMD指令，通过 cmd.exe /c 强制执行，无Linux语法
+          # 完全用CMD指令，通过 cmd.exe /c 强制执行，无Linux语法 
           script: |
             cmd.exe /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && dir && C:\Windows\System32\tar.exe -zxvf 1.tar.gz && dir && if exist dist (echo ✅ 解压成功) else (echo ❌ 解压失败 && exit 1)"
