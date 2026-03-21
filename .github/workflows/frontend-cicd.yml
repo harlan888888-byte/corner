@@ -1,4 +1,4 @@
-name: Frontend CI/CD（SCP极致优化版）
+name: Frontend CI/CD（终极极速版）
 on:
   push:
     branches: [ master ]
@@ -14,10 +14,9 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 拉取代码
       - uses: actions/checkout@v4
 
-      # 2. 构建环节（仅非"仅部署"时执行）
+      # 1. 构建环节（不变）
       - name: 安装依赖并构建
         if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
@@ -32,42 +31,36 @@ jobs:
       - run: pnpm run build
         if: ${{ !github.event.inputs.deploy_only }}
 
-      # 3. 关键：检查dist是否存在且有内容（排查空文件问题）
+      # 2. 验证dist文件（不变）
       - name: 验证dist文件
         run: |
           echo "=== 查看dist目录 ==="
           ls -la $GITHUB_WORKSPACE/dist/ || echo "dist目录不存在！"
-          echo "=== 查看工作目录 ==="
-          ls -la $GITHUB_WORKSPACE/
 
-      # 4. 安装sshpass（自动填充密码）
+      # 3. 安装依赖（不变）
       - name: 安装sshpass
-        run: sudo apt update && sudo apt install -y sshpass
+        run: sudo apt update && sudo apt install -y sshpass zip
 
-      # 5. 核心优化：SSH连接复用 + SCP压缩传输（解决慢的核心）
-      - name: 部署到服务器（SCP极致优化版）
+      # 4. 核心：打包成单个ZIP + 传输 + 服务器解压（极速）
+      - name: 部署到服务器（终极极速版）
         run: |
-          # 第一步：配置SSH连接复用（一次握手，多次传输，避免重复认证）
-          mkdir -p ~/.ssh
-          # 写入SSH复用配置（覆盖原有配置，避免冲突）
-          cat > ~/.ssh/config << EOF
-          Host *
-            ControlMaster auto
-            ControlPath ~/.ssh/ssh_mux_%h_%p_%r
-            ControlPersist 60s  # 连接保持60秒，足够完成传输
-            Compression yes      # 全局开启SSH压缩
-          EOF
-          # 配置文件权限（SSH要求必须600，否则报错）
-          chmod 600 ~/.ssh/config
+          # ========== 步骤1：构建机打包（1秒完成） ==========
+          cd $GITHUB_WORKSPACE
+          zip -q -r dist.zip dist/  # -q：静默打包，-r：递归打包
 
-          # 第二步：创建服务器目标目录（复用上面的SSH连接，无额外握手）
-          sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /test"
+          # ========== 步骤2：传输单个ZIP包（核心提速） ==========
+          # 单个文件传输，握手仅1次，体积压缩80%+
+          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -P 22 \
+            $GITHUB_WORKSPACE/dist.zip \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:C:/test/
 
-          # 第三步：压缩+递归传输dist（核心优化）
-          # -C：开启传输压缩（小文件体积减半）
-          # -r：递归传输目录
-          # -o StrictHostKeyChecking=no：跳过服务器指纹验证
-          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -C -r -P 22 $GITHUB_WORKSPACE/dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/test/
-
-          # 可选：清理SSH复用连接（避免残留）
-          sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} -O exit || true
+          # ========== 步骤3：服务器端解压（Windows原生命令，无依赖） ==========
+          # 用PowerShell解压，覆盖旧文件，删除压缩包
+          sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "powershell -Command \"\
+              Expand-Archive -Path C:\test\dist.zip -DestinationPath C:\test -Force; \
+              Remove-Item C:\test\dist.zip -Force; \
+              # 把dist内的文件移到/test根目录，删除dist文件夹
+              Get-ChildItem C:\test\dist\* | Move-Item -Destination C:\test -Force; \
+              Remove-Item C:\test\dist -Recurse -Force \
+            \""
