@@ -32,21 +32,16 @@ jobs:
       - run: pnpm run build
         if: ${{ !github.event.inputs.deploy_only }}
 
-      # 3. 核心：用 SFTP 直接传文件，完全不用 tar
+      # 3. 部署：修正参数名 + 确保服务器地址正确
       - name: 部署到 Windows 服务器（无 tar 依赖）
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          # 服务器信息（和你原来的 secrets 一致）
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASS }}
-          host: ${{ secrets.SERVER_HOST }}
-          port: 22  # Bitvise 默认端口
-          # 本地构建产物路径
-          local_path: "./dist/*"
-          # 服务器目标路径（Windows 格式：D:/test/ 或 /test/ 都可以）
-          remote_path: "/test/"
-          # 强制 SFTP 协议，不打包、不解压
-          sftp_only: true
-          # 可选：是否删除远程原有文件（false 保留，true 清空）
-          delete_remote_files: false
-          timeout: 60s
+          username: ${{ secrets.SERVER_USER }}    # 服务器用户名
+          password: ${{ secrets.SERVER_PASS }}    # 服务器密码
+          server: ${{ secrets.SERVER_HOST }}      # 关键：用 server 替代 host
+          port: 22                                # Bitvise 默认端口
+          local_path: "./dist/*"                  # 本地构建产物路径
+          remote_path: "/test/"                   # 服务器目标路径
+          sftp_only: true                         # 强制 SFTP 协议
+          delete_remote_files: false              # 不删除远程原有文件
+          # 移除不支持的 timeout 参数
