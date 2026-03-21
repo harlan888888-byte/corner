@@ -18,19 +18,22 @@ jobs:
       - name: 拉取仓库代码
         uses: actions/checkout@v4
 
-      # 2. 构建+打包成tar.gz（仅当非「仅部署」时执行）
+      # 2. 构建前端项目（仅当非「仅部署」时执行）
       - name: 安装 Node.js 环境
         if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: 'pnpm'  # 缓存pnpm依赖（需先安装pnpm才能生效）
 
+      # 关键修正：把pnpm安装步骤移到setup-node之后，且在install之前
       - name: 安装 pnpm
         if: ${{ !github.event.inputs.deploy_only }}
         uses: pnpm/action-setup@v4
         with:
           version: latest
+          # 显式指定pnpm安装路径，确保加入PATH
+          run_install: false
 
       - name: 安装项目依赖
         if: ${{ !github.event.inputs.deploy_only }}
@@ -40,17 +43,15 @@ jobs:
         if: ${{ !github.event.inputs.deploy_only }}
         run: pnpm run build
 
-      - name: 打包 dist 为 tar.gz（带时间戳）
+      # 3. 打包 dist 为 tar.gz（带时间戳）
+      - name: 打包 dist 为 tar.gz
         if: ${{ !github.event.inputs.deploy_only }}
         run: |
-          # 生成带时间戳的tar.gz包名，避免覆盖
           PACKAGE_NAME="dist-$(date +%Y%m%d%H%M).tar.gz"
-          # 打包dist目录为tar.gz
           tar -zcvf $PACKAGE_NAME ./dist
-          # 把包名存入环境变量，供后续SFTP步骤使用
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
 
-      # 3. SFTP传输tar.gz包到Windows服务器（仅传压缩包，不解压）
+      # 4. SFTP传输tar.gz到Windows服务器
       - name: SFTP传输tar.gz到Windows服务器
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -58,5 +59,5 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           server: ${{ secrets.SERVER_HOST }}
           port: 22
-          local_path: "./${{ env.PACKAGE_NAME }}"  # 指向生成的tar.gz包
-          remote_path: "/test/"                    # 压缩包会传到C:\test\目录下
+          local_path: "./${{ env.PACKAGE_NAME }}"
+          remote_path: "/test/"
