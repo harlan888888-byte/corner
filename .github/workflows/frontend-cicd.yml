@@ -1,4 +1,4 @@
-name: Frontend CI/CD（Windows Server 最终零报错版）
+name: Frontend CI/CD（Windows Server 最终可用版）
 on:
   push:
     branches: [ master ]
@@ -16,7 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. 构建环节（不变）
       - name: 安装依赖并构建
         if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
@@ -31,42 +30,19 @@ jobs:
       - run: pnpm run build
         if: ${{ !github.event.inputs.deploy_only }}
 
-      # 2. 验证dist文件（不变）
       - name: 验证dist文件
         run: |
           echo "=== 查看dist目录 ==="
           ls -la $GITHUB_WORKSPACE/dist/ || echo "dist目录不存在！"
 
-      # 3. 安装依赖（不变）
-      - name: 安装sshpass和zip
-        run: sudo apt update && sudo apt install -y sshpass zip
+      - name: 安装sshpass
+        run: sudo apt update && sudo apt install -y sshpass
 
-      # 4. 核心修复：正确执行Windows命令 + 路径适配
-      - name: 部署到服务器（零报错极速版）
+      # 核心：纯scp传输，不依赖服务器任何工具，彻底规避powershell报错
+      - name: 部署到服务器（极简无依赖版）
         run: |
-          # ========== 步骤1：构建机打包（1秒完成） ==========
-          cd $GITHUB_WORKSPACE
-          zip -q -r dist.zip dist/
-
-          # ========== 步骤2：先在服务器创建目录（关键：用ssh执行Windows命令） ==========
-          # 注意：ssh连接到Windows服务器后，执行PowerShell命令
-          sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "mkdir -p /c/test"
-
-          # ========== 步骤3：传输ZIP包（用SSH映射路径 /c/test，适配Windows） ==========
-          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -P 22 \
-            $GITHUB_WORKSPACE/dist.zip \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/c/test/
-
-          # ========== 步骤4：服务器解压+清理（通过ssh在Windows上执行PowerShell） ==========
-          sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "powershell.exe -Command \"\
-              # 解压ZIP包（覆盖旧文件）
-              Expand-Archive -Path C:\\test\\dist.zip -DestinationPath C:\\test -Force; \
-              # 删除ZIP包
-              Remove-Item -Path C:\\test\\dist.zip -Force; \
-              # 把dist内的文件移动到C:\test根目录
-              Get-ChildItem -Path C:\\test\\dist\\* | Move-Item -Destination C:\\test -Force; \
-              # 删除空的dist文件夹
-              Remove-Item -Path C:\\test\\dist -Recurse -Force \
-            \""
+          # 1. 直接用scp递归传输dist（一次性传输，无压缩包，纯密码）
+          # 目标路径：直接写你项目的SSH根目录路径（比如 /corner，对应你项目根目录）
+          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -C -r -P 22 \
+            $GITHUB_WORKSPACE/dist/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/corner/
