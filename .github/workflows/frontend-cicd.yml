@@ -35,10 +35,9 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH私钥（核心）
+          password: ${{ secrets.SERVER_PASS }}
           source: "dist/*"
           target: "/test"
           strip_components: 1
           overwrite: true
           timeout: 60s
-          
