@@ -1,29 +1,10 @@
-name: Frontend CI/CD
-on:
-  push:
-    branches: [master]
-  workflow_dispatch:
-    inputs:
-      deploy_only:
-        type: boolean
-        description: '仅执行部署（跳过构建）'
-        required: false
-        default: false
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: 远程解压 1.tar.gz（纯Windows CMD语法）
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASS }}
-          port: 22
-          # 完全用CMD指令，通过 cmd.exe /c 强制执行，无Linux语法
-          script: |
-            cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test
-            tar -zxvf 1.tar.gz && dir
+- name: 远程解压 1.tar.gz
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ secrets.SERVER_HOST }}
+    username: ${{ secrets.SERVER_USER }}
+    password: ${{ secrets.SERVER_PASS }}
+    port: 22
+    # 关键：换成你 Git 里 tar.exe 的真实绝对路径
+    script: |
+      cmd /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && C:\Program Files\Git\usr\bin\tar.exe -zxvf 1.tar.gz"
