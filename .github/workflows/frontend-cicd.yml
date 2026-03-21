@@ -16,32 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 远程解压 1.tar.gz（带日志校验）
+      - name: 远程解压 1.tar.gz（纯Windows CMD语法）
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           port: 22
+          # 完全用CMD指令，通过 cmd.exe /c 强制执行，无Linux语法
           script: |
-            '
-            # 1. 输出当前目录（确认路径）
-            echo "===== 当前工作目录 ====="
-            pwd
-            # 2. 列出压缩包所在目录的所有文件（确认1.tar.gz存在）
-            echo "===== 压缩包目录文件 ====="
-            ls -l /c/phpstudy_pro/WWW/project/vue_project/front/test/
-            # 3. 用绝对路径执行tar解压，输出解压过程
-            echo "===== 开始解压 ====="
-            /c/Windows/System32/tar.exe -zxvf /c/phpstudy_pro/WWW/project/vue_project/front/test/1.tar.gz -C /c/phpstudy_pro/WWW/project/vue_project/front/test
-            # 4. 列出解压后目录的文件（看是否有解压结果）
-            echo "===== 解压后目录文件 ====="
-            ls -l /c/phpstudy_pro/WWW/project/vue_project/front/test/
-            # 5. 检查是否有解压后的dist目录（核心校验）
-            if [ -d "/c/phpstudy_pro/WWW/project/vue_project/front/test/dist" ]; then
-              echo "✅ 解压成功！dist目录已存在"
-            else
-              echo "❌ 解压失败！未找到dist目录"
-              exit 1
-            fi
-            '
+            cmd.exe /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && dir && C:\Windows\System32\tar.exe -zxvf 1.tar.gz && dir && if exist dist (echo ✅ 解压成功) else (echo ❌ 解压失败 && exit 1)"
