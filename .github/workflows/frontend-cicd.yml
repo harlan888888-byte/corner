@@ -14,44 +14,68 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 拉取代码（无论是否仅部署，都需要拉取）
+      # 1. 拉取代码
       - uses: actions/checkout@v4
 
-      # 2. 安装依赖并构建（整体受控于 if 条件，和你验证过的结构一致）
-      # 构建环节
-      - name: 安装依赖并构建
+      # 2. 安装依赖并构建（仅非仅部署时执行）
+      - name: 安装Node.js
         if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - uses: pnpm/action-setup@v4
+      
+      - name: 安装pnpm
         if: ${{ !github.event.inputs.deploy_only }}
+        uses: pnpm/action-setup@v4
         with:
           version: latest
-      - run: pnpm install
+      
+      - name: 安装依赖
         if: ${{ !github.event.inputs.deploy_only }}
-      - run: pnpm run build
+        run: pnpm install
+      
+      - name: 构建项目
         if: ${{ !github.event.inputs.deploy_only }}
+        run: pnpm run build
 
-      # 新增步骤：打包 dist 为 tar.gz（仅在非仅部署时执行）
-      - name: 打包 dist 为 tar.gz
+      # 3. 打包dist为tar.gz（仅非仅部署时执行）
+      - name: 打包dist为tar.gz
         if: ${{ !github.event.inputs.deploy_only }}
         run: |
-          # 生成带时间戳的包名，避免覆盖服务器旧文件
           PACKAGE_NAME="dist-$(date +%Y%m%d%H%M).tar.gz"
-          # 打包 dist 目录为 tar.gz 压缩包
           tar -zcvf $PACKAGE_NAME ./dist
-          # 将包名存入环境变量，供后续部署步骤使用
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+          # 打印包名，方便调试
+          echo "打包完成，包名：$PACKAGE_NAME"
 
-      # 3. SFTP 部署 tar.gz 包到 Windows 服务器
-      - name: SFTP 部署到 Windows 服务器
+      # 4. 处理仅部署模式的包名（避免变量为空）
+      - name: 仅部署模式-指定默认包名
+        if: ${{ github.event.inputs.deploy_only }}
+        run: |
+          # 仅部署时手动指定最新包名（需确保服务器有这个包，或改成你实际的包名）
+          echo "PACKAGE_NAME=dist-latest.tar.gz" >> $GITHUB_ENV
+
+      # 5. SFTP部署到Windows服务器（核心修正：Windows风格远程路径）
+      - name: SFTP部署到Windows服务器
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASS }}
           server: ${{ secrets.SERVER_HOST }}
           port: 22
-          # 指向打包好的 tar.gz 包（仅传压缩包，不解压） 
           local_path: "./${{ env.PACKAGE_NAME }}"
-          remote_path: "/test/"
+          # 核心修正：Windows绝对路径（/换成\，指定真实目录）
+          remote_path: "C:\\phpstudy_pro\\WWW\\project\\vue_project\\front\\test\\"
+          # 可选：开启调试模式，方便排查问题
+          sftpArgs: "-vvv"
+
+      # 6. 远程解压（复用之前验证过的解压脚本）
+      - name: 远程解压tar.gz包
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASS }}
+          port: 22
+          script: |
+            cmd /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && tar -zxvf ${{ env.PACKAGE_NAME }}"
