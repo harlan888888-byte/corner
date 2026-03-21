@@ -48,6 +48,5 @@ jobs:
         run: |
           # 强制创建服务器目标目录
           sshpass -p "${{ secrets.SERVER_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /test"
-          # 推送文件（构建机 → 服务器）
-          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -r -P 22 $GITHUB_WORKSPACE/dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/test/
-          
+          # 核心修改：dist/ 替代 dist/*，一次性递归传输
+          sshpass -p "${{ secrets.SERVER_PASS }}" scp -o StrictHostKeyChecking=no -r -P 22 $GITHUB_WORKSPACE/dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/test/
