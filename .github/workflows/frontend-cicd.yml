@@ -1,70 +1,52 @@
-# 防错1：Action名称简洁，避免特殊字符导致解析异常
-name: Build and Upload Dist
+name: Frontend CI/CD（精准匹配需求版）
 on:
   push:
     branches: [ master ]
-  workflow_dispatch: # 手动触发，方便测试
+  workflow_dispatch:
+    inputs:
+      deploy_only:
+        type: boolean
+        description: "仅执行部署（跳过构建）"
+        required: false
+        default: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    # 防错2：显式指定工作目录，避免路径漂移
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}
     steps:
-      # 步骤1：拉取代码（必选，否则找不到项目文件）
-      - name: Checkout code
-        uses: actions/checkout@v4
+      # ===== 1. 拉取代码（即使仅部署也需要拉取，或可优化为仅下载制品）=====
+      - uses: actions/checkout@v4
 
-      # 步骤2：安装Node.js（必选，否则无法构建）
-      - name: Set up Node.js
+      # ===== 2. 构建环节（仅当不选「仅部署」时执行）=====
+      - name: 安装依赖并构建
+        if: ${{ !github.event.inputs.deploy_only }}
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm' # 缓存pnpm依赖，加速构建
-
-      # 步骤3：安装依赖（必选，否则pnpm run build会失败）
-      - name: Install dependencies
-        run: pnpm install
-
-      # 步骤4：构建前端代码（生成dist文件夹）
-      - name: Build frontend
-        run: pnpm run build
-        # 防错3：构建失败时直接终止，避免空dist上传
-        continue-on-error: false
-
-      # 步骤5：验证dist文件夹存在（防错核心！）
-      - name: Check dist folder exists
-        run: |
-          if [ ! -d "dist" ]; then
-            echo "Error: dist folder not found!"
-            exit 1
-          fi
-          ls -la dist/ # 日志里能看到dist里的文件，确认构建成功
-
-      # 步骤6：手动打包dist（绝对保留dist目录，无嵌套）
-      - name: Package dist folder
-        run: |
-          # 防错4：强制在仓库根目录打包，避免路径错误
-          cd ${{ github.workspace }}
-          # 核心命令：打包dist为dist-package.zip，根目录就是dist/
-          zip -r dist-package.zip dist/
-          # 防错5：验证压缩包生成成功
-          if [ ! -f "dist-package.zip" ]; then
-            echo "Error: Zip file not generated!"
-            exit 1
-          fi
-          # 打印压缩包内容，确认dist/目录存在
-          unzip -l dist-package.zip | head -10
-
-      # 步骤7：上传压缩包（绝对不会消失的核心步骤）
-      - name: Upload dist package
-        uses: actions/upload-artifact@v4
+      - uses: pnpm/action-setup@v4
+        if: ${{ !github.event.inputs.deploy_only }}
         with:
-          # 防错6：Artifacts名称和压缩包名一致，避免混淆
-          name: dist-package
-          # 防错7：绝对路径指定压缩包，避免找不到文件
-          path: ${{ github.workspace }}/dist-package.zip
-          # 防错8：延长保留时间，避免测试时压缩包被自动删除
-          retention-days: 30
+          version: latest
+      - run: pnpm install
+        if: ${{ !github.event.inputs.deploy_only }}
+      - run: pnpm run build
+        if: ${{ !github.event.inputs.deploy_only }}
+
+      # ===== 3. 核心：直接通过SSH推送dist内文件到服务器 =====
+      - name: 部署到服务器（直接推送文件）
+        uses: appleboy/scp-action@master  # 轻量的SCP工具，无需压缩
+        with:
+          # 服务器基础信息（建议存在GitHub Secrets中，避免明文）
+          host: ${{ secrets.SERVER_HOST }}        # 服务器IP/域名
+          username: ${{ secrets.SERVER_USER }}    # 服务器用户名（如root/ubuntu）
+          password: ${{ secrets.SERVER_PWD }}     # 服务器密码（或用密钥更安全）
+          # 或用SSH密钥（推荐）：key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+          # 关键：指定要推送的文件（dist/* 表示dist内的所有内容）
+          source: "dist/*"                        # 本地构建后的文件路径（dist内的所有内容）
+          target: "/test"                 # 服务器目标目录（根据你的实际路径修改）
+          
+          # 可选配置（提升部署体验）
+          overwrite: true                         # 覆盖服务器同名文件
+          strip_components: 1                     # 去掉dist层级，直接把内容放到target目录
+          timeout: 60s                            # 超时时间
