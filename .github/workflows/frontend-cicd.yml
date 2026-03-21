@@ -1,12 +1,12 @@
 name: Frontend CI/CD
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   workflow_dispatch:
     inputs:
       deploy_only:
         type: boolean
-        description: "仅执行部署（跳过构建）"
+        description: '仅执行部署（跳过构建）'
         required: false
         default: false
 
@@ -18,24 +18,30 @@ jobs:
       - uses: actions/checkout@v4
 
       # 2. 安装依赖并构建（整体受控于 if 条件，和你验证过的结构一致）
+      # 构建环节
       - name: 安装依赖并构建
         if: ${{ !github.event.inputs.deploy_only }}
-        # 这里用 && 串联所有构建步骤，保证在同一个 step 里执行，路径不会乱
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        if: ${{ !github.event.inputs.deploy_only }}
+        with:
+          version: latest
+      - run: pnpm install
+        if: ${{ !github.event.inputs.deploy_only }}
+      - run: pnpm run build
+        if: ${{ !github.event.inputs.deploy_only }}
+
+      # 新增步骤：打包 dist 为 tar.gz（仅在非仅部署时执行）
+      - name: 打包 dist 为 tar.gz
+        if: ${{ !github.event.inputs.deploy_only }}
         run: |
-          # 第一步：安装 Node.js 24（和你指定的版本一致）
-          curl -fsSL https://fnm.vercel.app/install | bash
-          export PATH="$HOME/.local/share/fnm:$PATH"
-          fnm install 24 && fnm use 24
-          # 第二步：安装最新版 pnpm
-          npm install -g pnpm
-          # 第三步：安装项目依赖
-          pnpm install
-          # 第四步：构建前端产物
-          pnpm run build
-          # 第五步：打包 dist 为 tar.gz（带时间戳，避免覆盖）
+          # 生成带时间戳的包名，避免覆盖服务器旧文件
           PACKAGE_NAME="dist-$(date +%Y%m%d%H%M).tar.gz"
+          # 打包 dist 目录为 tar.gz 压缩包
           tar -zcvf $PACKAGE_NAME ./dist
-          # 把包名存入环境变量，供后续部署使用
+          # 将包名存入环境变量，供后续部署步骤使用
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
 
       # 3. SFTP 部署 tar.gz 包到 Windows 服务器
