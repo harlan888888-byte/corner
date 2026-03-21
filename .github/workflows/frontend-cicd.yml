@@ -42,20 +42,32 @@ jobs:
       - name: 打包dist为tar.gz
         if: ${{ !github.event.inputs.deploy_only }}
         run: |
+          # 强制生成包名，避免空值
           PACKAGE_NAME="dist-$(date +%Y%m%d%H%M).tar.gz"
           tar -zcvf $PACKAGE_NAME ./dist
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
-          # 打印包名，方便调试
-          echo "打包完成，包名：$PACKAGE_NAME"
+          # 验证包存在
+          ls -l $PACKAGE_NAME
+          echo "✅ 打包完成，包名：$PACKAGE_NAME"
 
-      # 4. 处理仅部署模式的包名（避免变量为空）
-      - name: 仅部署模式-指定默认包名
+      # 4. 仅部署模式-强制指定包名（必须确保服务器有这个包）
+      - name: 仅部署模式-指定包名
         if: ${{ github.event.inputs.deploy_only }}
         run: |
-          # 仅部署时手动指定最新包名（需确保服务器有这个包，或改成你实际的包名）
-          echo "PACKAGE_NAME=dist-latest.tar.gz" >> $GITHUB_ENV
+          # 替换为你服务器上实际存在的包名，比如最新打包的那个
+          echo "PACKAGE_NAME=dist-202603210745.tar.gz" >> $GITHUB_ENV
+          echo "✅ 仅部署模式，指定包名：${{ env.PACKAGE_NAME }}"
 
-      # 5. SFTP部署到Windows服务器（核心修正：Windows风格远程路径）
+      # 5. 强制校验包名变量（关键：避免空值）
+      - name: 校验包名变量
+        run: |
+          if [ -z "${{ env.PACKAGE_NAME }}" ]; then
+            echo "❌ PACKAGE_NAME 为空，部署终止"
+            exit 1
+          fi
+          echo "✅ 包名校验通过：${{ env.PACKAGE_NAME }}"
+
+      # 6. SFTP部署（核心：用Linux风格路径，Bitvise自动映射）
       - name: SFTP部署到Windows服务器
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -64,12 +76,12 @@ jobs:
           server: ${{ secrets.SERVER_HOST }}
           port: 22
           local_path: "./${{ env.PACKAGE_NAME }}"
-          # 核心修正：Windows绝对路径（/换成\，指定真实目录）
-          remote_path: "C:\\phpstudy_pro\\WWW\\project\\vue_project\\front\\test\\"
-          # 可选：开启调试模式，方便排查问题
-          sftpArgs: "-vvv"
+          # 关键：Linux风格路径，Bitvise会映射为 C:\phpstudy_pro\WWW\project\vue_project\front\test
+          remote_path: "/phpstudy_pro/WWW/project/vue_project/front/test/"
+          sftp_only: true  # 强制仅SFTP，避免SSH干扰
+          delete_remote_files: false  # 禁止删除远程文件，避免误操作 
 
-      # 6. 远程解压（复用之前验证过的解压脚本）
+      # 7. 远程解压（复用稳定的解压逻辑）
       - name: 远程解压tar.gz包
         uses: appleboy/ssh-action@master
         with:
@@ -78,4 +90,4 @@ jobs:
           password: ${{ secrets.SERVER_PASS }}
           port: 22
           script: |
-            cmd /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && tar -zxvf ${{ env.PACKAGE_NAME }}"
+            cmd /c "cd /d C:\phpstudy_pro\WWW\project\vue_project\front\test && C:\Progra~1\Git\usr\bin\tar.exe -zxvf ${{ env.PACKAGE_NAME }}"
