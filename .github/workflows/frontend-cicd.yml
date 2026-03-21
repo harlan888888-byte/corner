@@ -41,3 +41,5 @@ jobs:
           strip_components: 1
           overwrite: true
           timeout: 60s
+          os_type: windows
+          tar_exec: tar
