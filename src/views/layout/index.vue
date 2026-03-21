@@ -59,7 +59,7 @@ const if_click = ref(false)
 const tabs = [
   {
     path: '/hometab',
-    title: '首页1',
+    title: '首页11',
     icon: 'wap-home-o',
     component: HomeTab
   },

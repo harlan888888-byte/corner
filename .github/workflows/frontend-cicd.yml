@@ -50,24 +50,7 @@ jobs:
           ls -l $PACKAGE_NAME
           echo "✅ 打包完成，包名：$PACKAGE_NAME"
 
-      # 4. 仅部署模式-强制指定包名（必须确保服务器有这个包）
-      - name: 仅部署模式-指定包名
-        if: ${{ github.event.inputs.deploy_only }}
-        run: |
-          # 替换为你服务器上实际存在的包名，比如最新打包的那个
-          echo "PACKAGE_NAME=dist-202603210745.tar.gz" >> $GITHUB_ENV
-          echo "✅ 仅部署模式，指定包名：${{ env.PACKAGE_NAME }}"
-
-      # 5. 强制校验包名变量（关键：避免空值）
-      - name: 校验包名变量
-        run: |
-          if [ -z "${{ env.PACKAGE_NAME }}" ]; then
-            echo "❌ PACKAGE_NAME 为空，部署终止"
-            exit 1
-          fi
-          echo "✅ 包名校验通过：${{ env.PACKAGE_NAME }}"
-
-      # 6. SFTP部署（核心：用Linux风格路径，Bitvise自动映射）
+      # 4. SFTP部署（核心：用Linux风格路径，Bitvise自动映射）
       - name: SFTP部署到Windows服务器
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -76,12 +59,11 @@ jobs:
           server: ${{ secrets.SERVER_HOST }}
           port: 22
           local_path: "./${{ env.PACKAGE_NAME }}"
-          # 关键：Linux风格路径，Bitvise会映射为 C:\phpstudy_pro\WWW\project\vue_project\front\test
           remote_path: "/C:/phpstudy_pro/WWW/project/vue_project/front/test/"
           sftp_only: true  # 强制仅SFTP，避免SSH干扰
           delete_remote_files: false  # 禁止删除远程文件，避免误操作 
 
-      # 7. 远程解压（复用稳定的解压逻辑）
+      # 5. 远程解压（复用稳定的解压逻辑）
       - name: 远程解压tar.gz包
         uses: appleboy/ssh-action@master
         with:
