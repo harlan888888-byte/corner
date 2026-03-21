@@ -1,12 +1,12 @@
 name: Frontend CI/CD（精准匹配需求版）
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   workflow_dispatch:
     inputs:
       deploy_only:
         type: boolean
-        description: "仅执行部署（跳过构建）"
+        description: '仅执行部署（跳过构建）'
         required: false
         default: false
 
@@ -34,18 +34,18 @@ jobs:
 
       # ===== 3. 核心：直接通过SSH推送dist内文件到服务器 =====
       - name: 部署到服务器（直接推送文件）
-        uses: appleboy/scp-action@master  # 轻量的SCP工具，无需压缩
+        uses: appleboy/scp-action@master # 轻量的SCP工具，无需压缩
         with:
           # 服务器基础信息（建议存在GitHub Secrets中，避免明文）
-          host: ${{ secrets.SERVER_HOST }}        # 服务器IP/域名
-          username: ${{ secrets.SERVER_USER }}    # 服务器用户名（如root/ubuntu）
-          password: ${{ secrets.SERVER_PWD }}     # 服务器密码（或用密钥更安全）
-          
+          host: ${{ secrets.SERVER_HOST }} # 服务器IP/域名
+          username: ${{ secrets.SERVER_USER }} # 服务器用户名（如root/ubuntu）
+          password: ${{ secrets.SERVER_PASS }} # 服务器密码（或用密钥更安全）
+
           # 关键：指定要推送的文件（dist/* 表示dist内的所有内容）
-          source: "dist/*"                        # 本地构建后的文件路径（dist内的所有内容）
-          target: "/test"                 # 服务器目标目录（根据你的实际路径修改）
-          
+          source: 'dist/*' # 本地构建后的文件路径（dist内的所有内容）
+          target: '/test' # 服务器目标目录（根据你的实际路径修改）
+
           # 可选配置（提升部署体验）
-          overwrite: true                         # 覆盖服务器同名文件
-          strip_components: 1                     # 去掉dist层级，直接把内容放到target目录
-          timeout: 60s                            # 超时时间
+          overwrite: true # 覆盖服务器同名文件
+          strip_components: 1 # 去掉dist层级，直接把内容放到target目录
+          timeout: 60s # 超时时间
