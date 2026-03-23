@@ -7,6 +7,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+git-tip
+
 node_modules
 .DS_Store
 dist
@@ -28,7 +30,7 @@ coverage
 
 .eslintcache
 
-# Cypress 
+# Cypress
 /cypress/videos/
 /cypress/screenshots/
 
@@ -37,5 +39,3 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
-
-git-tip
