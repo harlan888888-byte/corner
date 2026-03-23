@@ -28,7 +28,7 @@ coverage
 
 .eslintcache
 
-# Cypress
+# Cypress 
 /cypress/videos/
 /cypress/screenshots/
 
