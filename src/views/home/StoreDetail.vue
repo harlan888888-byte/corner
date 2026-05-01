@@ -37,7 +37,12 @@
       </div>
       <!-- 店铺信息 -->
       <div class="store-info">
-        <h2 class="store-name">{{ storeInfo.name }}</h2>
+        <div class="store-name-row">
+          <h2 class="store-name">{{ storeInfo.name }}</h2>
+          <span class="store-category" v-if="storeInfo.category">{{
+            storeInfo.category
+          }}</span>
+        </div>
         <!-- 营业时间 -->
         <div class="store-hours" v-if="storeInfo.business_hours">
           <p class="hours-content">{{ storeInfo.business_hours }}</p>
@@ -237,10 +242,27 @@ onMounted(() => {
   background-color: white;
   padding: 15px;
 
+  .store-name-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
   .store-name {
     font-size: 20px;
     font-weight: 500;
-    margin-bottom: 10px;
+    margin-bottom: 0;
+  }
+
+  .store-category {
+    display: inline-block;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
   }
 
   .store-rating-average {

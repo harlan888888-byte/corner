@@ -5,7 +5,7 @@ import router from '@/router'
 
 // 根据环境自动切换 baseURL
 const getBaseURL = () => {
-  // 开发模式：使用相对路径，通过 Vite 代理转发
+  // 开发模式：使用相对路径，通过 Vite 代理转发，避免 CORS 跨域问题
   if (import.meta.env.MODE === 'development') {
     return 'http://192.168.0.183:82/api'
   }

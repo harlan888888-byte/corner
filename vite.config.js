@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-import { VantResolver } from '@vant/auto-import-resolver';
+import { VantResolver } from '@vant/auto-import-resolver'
 import path from 'path'
 import viteCompression from 'vite-plugin-compression'
 
@@ -16,18 +16,18 @@ export default defineConfig({
       imports: ['vue', 'vue-router', 'pinia'],
       dts: 'src/types/auto-imports.d.ts',
       include: [/\.vue$/, /\.vue\?vue/, /\.ts$/, /\.tsx$/],
-      resolvers: [ElementPlusResolver(), VantResolver()],
+      resolvers: [ElementPlusResolver(), VantResolver()]
     }),
     Components({
       // 指定需要自动导入的组件目录
       dirs: [
         'src/components' // 主组件目录
       ],
-      extensions: ['vue'],// 组件文件扩展名（默认：['.vue']）
-      deep: true,// 是否深度扫描子目录（默认：true）
+      extensions: ['vue'], // 组件文件扩展名（默认：['.vue']）
+      deep: true, // 是否深度扫描子目录（默认：true）
       resolvers: [ElementPlusResolver(), VantResolver()],
       // 生成组件类型声明文件
-      dts: 'src/types/components.d.ts',
+      dts: 'src/types/components.d.ts'
     }),
     // 压缩gzip插件配置
     viteCompression({
@@ -36,13 +36,13 @@ export default defineConfig({
       deleteOriginFile: false, // 不删除源文件
       compress: true, // 启用压缩
       verbose: true // 显示压缩信息
-    }),
+    })
   ],
   base: '/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
+    }
   },
   // 构建配置
   build: {
@@ -92,14 +92,21 @@ export default defineConfig({
       // 配置1：匹配以 /api 开头的请求，转发到后端接口地址
       // '/api': {
       //   // target: 'https://corner.ntotl.cn', // 你的后端接口域名（替换为实际地址）
-      //   target: 'http://192.168.0.183:82/api', // 本地后端服务地址（开发常用）
+      //   target: 'http://192.168.0.183:82', // 本地后端服务地址（开发常用）
       //   changeOrigin: true, // 必须开启：修改请求头中的 Origin，解决跨域
-      //   // 可选：重写路径（如果后端接口没有 /api 前缀，需要去掉）
-      //   // rewrite: (path) => path.replace(/^\/api/, ''),
+      //   // 重写路径：去掉 /api 前缀，并添加 .php 后缀
+      //   rewrite: (path) => {
+      //     const newPath = path.replace(/^\/api/, '');
+      //     // 如果路径末尾没有 .php，添加 .php 后缀
+      //     if (!newPath.endsWith('.php')) {
+      //       return newPath + '.php';
+      //     }
+      //     return newPath;
+      //   },
       //   // 可选：配置 HTTPS 证书忽略（如果后端是自签证书）
       //   // secure: false
       // },
-      // 配置2：可添加多个代理（比如静态资源代理）
+      // // 配置2：可添加多个代理（比如静态资源代理）
       // '/static': {
       //   target: 'http://192.168.0.183:82/static',
       //   changeOrigin: true
@@ -107,5 +114,3 @@ export default defineConfig({
     }
   }
 })
-
-
