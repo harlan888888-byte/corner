@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import defaultImgSrc from '@/assets/icons/miss_data.svg'
 
 const props = defineProps({

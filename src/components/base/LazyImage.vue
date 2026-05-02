@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import defaultImgSrc from '@/assets/icons/miss_store.svg'
 
 const props = defineProps({

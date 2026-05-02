@@ -39,9 +39,12 @@
       <div class="store-info">
         <div class="store-name-row">
           <h2 class="store-name">{{ storeInfo.name }}</h2>
-          <span class="store-category" v-if="storeInfo.category">{{
-            storeInfo.category
-          }}</span>
+          <span
+            class="store-category"
+            v-if="storeInfo.category"
+            :style="categoryStyle"
+            >{{ storeInfo.category }}</span
+          >
         </div>
         <!-- 营业时间 -->
         <div class="store-hours" v-if="storeInfo.business_hours">
@@ -87,11 +90,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getStoreDetail } from '@/api/home/store'
 import defaultImgSrc from '@/assets/icons/miss_store.svg'
 import { useVanImagePreview } from '@/composables/vant-utils/useVanImagePreview'
+import { getCategoryColor } from '@/utils/categoryColors'
 
 const route = useRoute()
 const router = useRouter()
@@ -115,6 +119,11 @@ const loading = ref(true)
 const error = ref('')
 
 const hasGoods = ref(false)
+
+// 根据分类获取颜色样式
+const categoryStyle = computed(() => {
+  return getCategoryColor(storeInfo.value.category)
+})
 
 // 返回首页
 const goBack = () => {
@@ -257,8 +266,6 @@ onMounted(() => {
 
   .store-category {
     display: inline-block;
-    background-color: #e8f5e9;
-    color: #2e7d32;
     padding: 3px 8px;
     border-radius: 4px;
     font-size: 12px;

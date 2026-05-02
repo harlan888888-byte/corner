@@ -12,6 +12,12 @@
         <!-- 空值处理：无店铺名时显示默认文本 -->
         <div class="store-name text-item">
           <span>{{ item.name }}</span>
+          <span
+            v-if="item.category"
+            class="store-category"
+            :style="categoryStyle"
+            >{{ item.category }}</span
+          >
         </div>
         <div class="store-rat-ave text-item">
           <div class="store-rating">
@@ -49,7 +55,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import defaultImgSrc from '@/assets/icons/miss_store.svg'
+import { getCategoryColor } from '@/utils/categoryColors'
 
 const props = defineProps({
   item: {
@@ -59,6 +67,11 @@ const props = defineProps({
 })
 
 const router = useRouter()
+
+// 根据分类获取颜色样式
+const categoryStyle = computed(() => {
+  return getCategoryColor(props.item.category)
+})
 
 // 跳转到店铺详情页面
 const goToDetail = () => {
@@ -83,8 +96,10 @@ $item-border-radius: 5px;
   padding: 10px 5px;
 
   .store-name {
+    display: flex;
     font-weight: bolder;
     margin-bottom: 0;
+    justify-content: space-between;
   }
 
   .store-img {
@@ -101,6 +116,18 @@ $item-border-radius: 5px;
 
   .store-rating {
     color: #fc683e;
+  }
+
+  .store-category {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .right-item {
+    flex: 1;
   }
 
   .store-title {

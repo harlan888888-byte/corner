@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    CategorySelector: typeof import('./../components/page/home/CategorySelector.vue')['default']
     CityPicker: typeof import('./../components/business/CityPicker.vue')['default']
     DialogStackExample: typeof import('./../components/base/DialogStackExample.vue')['default']
     EmptyState: typeof import('./../components/base/EmptyState.vue')['default']

@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 const btnLoading = ref(false)
 const btnLoadingText = ref('尝试打开高德地图...')

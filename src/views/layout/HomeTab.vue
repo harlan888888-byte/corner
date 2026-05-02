@@ -26,6 +26,12 @@
       />
     </div>
 
+    <!-- 类型选择组件 -->
+    <CategorySelector
+      v-model="selectedCategory"
+      @update:modelValue="handleCategoryChange"
+    />
+
     <LoadingToast v-if="btnLoading" :text="btnLoadingText" />
 
     <EmptyState v-if="!btnLoading && storeInfoList.length === 0" />
@@ -89,6 +95,9 @@ const storeid = ref(route.query.storeid || '')
 const showEnterAnimation = ref(false)
 const isMounted = ref(false)
 
+// 类型选择相关
+const selectedCategory = ref('')
+
 // ========== 2. 使用路由参数管理历史记录 ==========
 // 历史记录管理功能已封装到 historyStack store 中
 
@@ -109,6 +118,11 @@ watch(showCityPicker, (newValue) => {
 })
 
 // ========== 4. 业务逻辑（修复DOM/API请求异常） ==========
+// 处理类型选择变化
+const handleCategoryChange = () => {
+  resetPaginationAndFetchData()
+}
+
 // 初始化城市选择
 const initSelectedCity = () => {
   try {
@@ -208,6 +222,11 @@ const getStoreInfoList = async () => {
 
     if (selectedCity.value && selectedCity.value.name !== '所有城市') {
       params.city = selectedCity.value.name
+    }
+
+    // 添加类型参数
+    if (selectedCategory.value) {
+      params.category = selectedCategory.value
     }
 
     const res = await getStoreInfo(params)

@@ -59,8 +59,6 @@
 <script setup>
 import {
   ref,
-  defineProps,
-  defineEmits,
   watch,
   onMounted,
   onUnmounted
