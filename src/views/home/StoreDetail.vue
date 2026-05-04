@@ -29,7 +29,6 @@
           v-model:show="vanImageModalShow"
           :images="images"
           :start-position="vanImageCurrentIndex"
-          @close="vanImageClose"
           teleport="body"
           show-indicators
           :show-index="false"
@@ -107,8 +106,7 @@ const {
   vanImageModalShow,
   vanImageCurrentIndex,
   vanImageHandleClick,
-  vanImageHandleDblClick,
-  vanImageClose
+  vanImageHandleDblClick
 } = useVanImagePreview()
 
 // 店铺信息

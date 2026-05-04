@@ -130,6 +130,8 @@ const handleCategoryClick = (category) => {
     saveCategory(category)
     emit('update:modelValue', category)
   }
+  // 点击分类后收起下拉框
+  isExpanded.value = false
 }
 </script>
 
