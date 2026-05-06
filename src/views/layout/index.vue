@@ -83,6 +83,8 @@ const tabs = [
   }
 ]
 
+const bottomTabPaths = ['/hometab', '/footprint', '/plan', '/mine']
+
 const clickTab = () => {
   if_click.value = true
 }
@@ -96,7 +98,8 @@ const handleTabChange = (index) => {
 const handleTabbarChange = (index) => {
   activeTab.value = index
   const paths = ['/hometab', '/footprint', '/plan', '/mine']
-  router.push(paths[index])
+  // 使用 replace 而不是 push，避免增加路由栈
+  router.replace(paths[index])
 }
 
 // 监听路由变化，同步 tab

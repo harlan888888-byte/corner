@@ -309,10 +309,10 @@ const handleTransitionEnd = (event) => {
   // 确保是 transform 属性的过渡完成
   if (event.propertyName === 'transform' && needRouteUpdate.value) {
     needRouteUpdate.value = false
-    // 执行路由跳转逻辑
+    // 执行路由跳转逻辑，使用 replace 而不是 push，避免增加路由栈
     const tab = props.tabs[activeTab.value]
     if (tab && tab.path && route.path !== tab.path) {
-      router.push(tab.path)
+      router.replace(tab.path)
     }
   }
 }

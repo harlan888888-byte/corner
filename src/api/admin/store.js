@@ -22,10 +22,9 @@ export const deleteStore = (storeid) =>
 export const deleteStoreGoods = (data) =>
   request.post('/admin/store/delete_goods', data)
 
-// 添加店铺详情图片
+// 添加店铺详情图片（到数据库）
 export const addGoods = (data) => request.post('/admin/store/add_goods', data)
 
-// 上传店铺头像
 export const uploadStoreImage = (formData) =>
   request.post('/admin/store/upload_image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
