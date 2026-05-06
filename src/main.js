@@ -8,6 +8,7 @@ import '@/styles/vant-common.css'
 import '@/styles/vue-common.css'
 import 'vant/es/toast/style'
 import 'vant/es/notify/style'
+import 'vant/es/dialog/style'
 
 // 初始化性能监控
 performanceMonitor.init()

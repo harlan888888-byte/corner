@@ -188,11 +188,21 @@ const handleBack = () => {
 }
 
 const handleDeleteGoodsImage = async ({ storeid, number }) => {
+  // 如果 number 为 0，表示图片是新上传的，还没保存到数据库，不需要调用后端接口
+  if (number === 0) {
+    return
+  }
   try {
     const { deleteStoreGoods } = await import('@/api/admin/store')
-    await deleteStoreGoods({ storeid, number })
+    const res = await deleteStoreGoods({ storeid, number })
+    if (res.data.code === 200) {
+      showToast('删除成功')
+    } else {
+      showFailToast('删除失败')
+    }
   } catch (error) {
     console.error('删除图片失败:', error)
+    showFailToast('删除失败')
   }
 }
 

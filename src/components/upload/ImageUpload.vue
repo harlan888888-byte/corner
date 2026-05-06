@@ -27,7 +27,7 @@ const props = defineProps({
   },
   maxSize: {
     type: Number,
-    default: 1 * 1024 * 1024
+    default: 50 * 1024 * 1024
   },
   uploadApi: {
     type: Function,

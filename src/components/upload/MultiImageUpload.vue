@@ -25,6 +25,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { showDialog } from 'vant'
 
 const props = defineProps({
   modelValue: {
@@ -37,7 +38,7 @@ const props = defineProps({
   },
   maxSize: {
     type: Number,
-    default: 1 * 1024 * 1024
+    default: 50 * 1024 * 1024
   },
   uploadApi: {
     type: Function,
@@ -64,15 +65,16 @@ const handleFileChange = async (e) => {
     return
   }
 
-  try {
-    const formData = new FormData()
-    formData.append('image', file)
-    const res = await props.uploadApi(formData)
   if (file.size > props.maxSize) {
     emit('error', '图片大小不能超过1MB')
     e.target.value = ''
     return
   }
+
+  try {
+    const formData = new FormData()
+    formData.append('image', file)
+    const res = await props.uploadApi(formData)
 
     if (res.data.code === 200) {
       const newImg = {
@@ -94,12 +96,30 @@ const handleFileChange = async (e) => {
 }
 
 const handleDelete = (idx) => {
-  const img = imageList.value[idx]
-  if (img.number > 0) {
-    emit('delete', { storeid: img.storeid, number: img.number })
-  }
-  imageList.value.splice(idx, 1)
-  emit('update:modelValue', imageList.value)
+  showDialog({
+    title: '',
+    message: '确定要删除这张图片吗？',
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#666666',
+    messageAlign: 'center',
+    closeOnClickOverlay: false,
+    transition: 'scale',
+    round: true,
+    showCancelButton: true
+  })
+    .then(() => {
+      const img = imageList.value[idx]
+      if (img.number > 0) {
+        emit('delete', { storeid: img.storeid, number: img.number })
+      }
+      imageList.value.splice(idx, 1)
+      emit('update:modelValue', imageList.value)
+    })
+    .catch(() => {
+      // 用户取消删除
+    })
 }
 </script>
 
