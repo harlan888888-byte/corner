@@ -1,188 +1,168 @@
 <template>
   <div class="mine-tab-container">
-    <h1>个人中心</h1>
-
-    <button class="open-dialog-btn" @click="openDialog1">打开弹窗1</button>
-
-    <!-- 弹窗1 -->
-    <div v-if="showDialog1" class="dialog-overlay">
-      <div class="dialog-content">
-        <h2>弹窗1</h2>
-        <p>这是弹窗1的内容</p>
-        <button class="dialog-btn" @click="openDialog2">打开弹窗2</button>
-        <button class="dialog-btn" @click="closeDialog1">关闭</button>
+    <!-- 如果是管理员，显示用户信息和管理入口 -->
+    <template v-if="userStore.isAdmin && userStore.token">
+      <div class="user-info-card">
+        <div class="avatar">
+          {{ userStore.user.username?.charAt(0)?.toUpperCase() || 'A' }}
+        </div>
+        <div class="info">
+          <div class="name">
+            {{ userStore.user.name || userStore.user.username }}
+          </div>
+          <div class="role">管理员</div>
+        </div>
       </div>
-    </div>
 
-    <!-- 弹窗2 -->
-    <div v-if="showDialog2" class="dialog-overlay">
-      <div class="dialog-content">
-        <h2>弹窗2</h2>
-        <p>这是弹窗2的内容</p>
-        <button class="dialog-btn" @click="closeDialog2">关闭</button>
+      <div class="menu-list">
+        <div class="menu-item" @click="goToAdminList">
+          <span class="menu-icon">🏪</span>
+          <span class="menu-text">店铺管理</span>
+          <span class="menu-arrow">›</span>
+        </div>
       </div>
-    </div>
+
+      <div class="logout-section">
+        <button class="logout-btn" @click="handleLogout">退出登录</button>
+      </div>
+    </template>
+
+    <!-- 如果不是管理员，显示登录页面 -->
+    <template v-else>
+      <AdminLogin @login-success="handleLoginSuccess" />
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useBackButton } from '@/utils/hooks/useBackButton'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/modules/user'
+import { getAdminInfo } from '@/api/user'
+import AdminLogin from '@/components/business/AdminLogin.vue'
 
-const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
-// 弹窗状态
-const showDialog1 = ref(false)
-const showDialog2 = ref(false)
-
-// 使用回退功能 hook
-const {
-  pushHistory,
-  popHistory,
-  resetHistoryCount,
-  getAddedHistoryCount,
-  handlePopState,
-  pushDialog,
-  resetRouteState
-} = useBackButton()
-
-// 保存事件监听器引用
-const popStateHandler = handlePopState(router, route)
-
-// 打开弹窗1
-const openDialog1 = () => {
-  showDialog1.value = true
-  pushHistory(router, route)
-  pushDialog(route, () => {
-    showDialog1.value = false
-  })
-}
-
-// 关闭弹窗1
-const closeDialog1 = () => {
-  popHistory(router, route)
-}
-
-// 打开弹窗2
-const openDialog2 = () => {
-  showDialog2.value = true
-  pushHistory(router, route)
-  pushDialog(route, () => {
-    showDialog2.value = false
-  })
-}
-
-// 关闭弹窗2
-const closeDialog2 = () => {
-  popHistory(router, route)
-}
-
-// 生命周期
-onMounted(() => {
-  // 添加后退按钮事件监听器
-  window.addEventListener('popstate', popStateHandler)
-})
-
-// 监听路由变化，当路由切换到当前组件时重置状态
-watch(
-  () => route.path,
-  (newPath, oldPath) => {
-    const currentRouteKey = route.name || route.path || 'default'
-    const isCurrentRoute = currentRouteKey.includes('/mine')
-
-    if (isCurrentRoute) {
-      // 重置当前路由的状态
-      resetRouteState(currentRouteKey)
+const checkTokenAndLoadUserInfo = async () => {
+  if (userStore.token) {
+    try {
+      await getAdminInfo()
+    } catch (error) {
+      userStore.clearUser()
     }
   }
-)
+}
 
-onUnmounted(() => {
-  // 移除事件监听器
-  window.removeEventListener('popstate', popStateHandler)
-  // 清理新增的历史记录
-  while (getAddedHistoryCount() > 0) {
-    popHistory(router, route)
-  }
-  // 重置历史记录计数
-  resetHistoryCount()
+onMounted(() => {
+  checkTokenAndLoadUserInfo()
 })
+
+const handleLoginSuccess = () => {
+  checkTokenAndLoadUserInfo()
+}
+
+const goToAdminList = () => {
+  router.push('/admin')
+}
+
+const handleLogout = () => {
+  userStore.logout()
+}
 </script>
 
 <style scoped>
 .mine-tab-container {
-  padding: 20px;
   min-height: 100vh;
-  background-color: #f6f6f6;
+  background: #f5f5f5;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 40px;
-  color: #333;
-}
-
-.open-dialog-btn {
-  display: block;
-  margin: 0 auto 20px;
-  padding: 10px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  color: white;
-  background-color: #673ab7;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.open-dialog-btn:hover {
-  background-color: #5e35b1;
-}
-
-.dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+.user-info-card {
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 1000;
-}
-
-.dialog-content {
-  background-color: white;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 80%;
-  max-width: 400px;
+  background: white;
+  margin-bottom: 10px;
 }
 
-h2 {
-  margin-top: 0;
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  margin-right: 15px;
+}
+
+.info {
+  flex: 1;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.role {
+  font-size: 14px;
+  color: #667eea;
+}
+
+.menu-list {
+  background: white;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+.menu-item:active {
+  background: #f5f5f5;
+}
+
+.menu-icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.menu-text {
+  flex: 1;
+  font-size: 16px;
   color: #333;
 }
 
-.dialog-btn {
-  display: inline-block;
-  margin-right: 10px;
-  padding: 8px 16px;
-  font-size: 14px;
-  color: white;
-  background-color: #673ab7;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.menu-arrow {
+  font-size: 20px;
+  color: #ccc;
 }
 
-.dialog-btn:hover {
-  background-color: #5e35b1;
+.logout-section {
+  padding: 30px 20px;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 14px;
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.logout-btn:active {
+  background: #ff7875;
 }
 </style>

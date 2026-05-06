@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import { performanceMonitor } from '@/performance'
+import { useUserStore } from '@/stores/modules/user'
 
 // createRouter 创建路由实例
 // 配置 history 模式
@@ -10,7 +11,9 @@ import { performanceMonitor } from '@/performance'
 
 // vite 中的环境变量 import.meta.env.BASE_URL  就是 vite.config.js 中的 base 配置项
 const router = createRouter({
-  history: import.meta.env.SSR ? createMemoryHistory(import.meta.env.BASE_URL) : createWebHistory(import.meta.env.BASE_URL),
+  history: import.meta.env.SSR
+    ? createMemoryHistory(import.meta.env.BASE_URL)
+    : createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
@@ -39,16 +42,9 @@ const router = createRouter({
           component: () => import('@/views/home/StoreDetail.vue')
         },
         {
-          path: '/aatest',
-          name: 'AATest',
-          component: () => import('@/views/home/AaTest.vue'),
-          children: [
-            {
-              path: 'indexpage',
-              name: 'IndexPage',
-              component: () => import('@/views/home/IndexPage.vue')
-            }
-          ]
+          path: '/admin',
+          name: 'Admin',
+          component: () => import('@/views/admin/StoreList.vue')
         }
       ]
     }
@@ -92,19 +88,13 @@ router.afterEach((to) => {
   }
 })
 
-// 登录访问拦截 => 默认是直接放行的
-// 根据返回值决定，是放行还是拦截
-// 返回值：
-// 1. undefined / true  直接放行
-// 2. false 拦回from的地址页面
-// 3. 具体路径 或 路径对象  拦截到对应的地址
-//    '/login'   { name: 'login' }
-// router.beforeEach((to) => {
-//   // 如果没有token, 且访问的是非登录页，拦截到登录，其他情况正常放行
-//   const useStore = useUserStore()
-//   if (!useStore.token && to.path !== '/login') {
-//     // return '/login'
-//   }
-// })
+// 登录访问拦截
+router.beforeEach((to) => {
+  const userStore = useUserStore()
+  // 检查是否访问管理员相关路由
+  if (to.path === '/admin' && !userStore.isAdmin) {
+    return '/mine'
+  }
+})
 
 export default router

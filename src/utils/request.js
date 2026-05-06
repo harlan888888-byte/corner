@@ -29,7 +29,15 @@ instance.interceptors.request.use(
   (config) => {
     const useStore = useUserStore()
     if (useStore.token) {
-      config.headers.Authorization = useStore.token
+      // 把 token 作为 URL 参数传递，兼容性最好
+      if (config.method === 'get') {
+        config.params = config.params || {}
+        config.params.token = useStore.token
+      } else {
+        // 对于 POST/PUT/DELETE，也可以添加到 params 中
+        config.params = config.params || {}
+        config.params.token = useStore.token
+      }
     }
     return config
   },
@@ -41,13 +49,21 @@ instance.interceptors.response.use(
   (res) => {
     if (res.data.code === 200) {
       return res
+    } else if (res.data.code === 401) {
+      const userStore = useUserStore()
+      userStore.clearUser()
+      router.push('/mine')
+      
+    } else {
+      ElMessage.error(res.data.message || '服务异常')
+      return Promise.reject(res.data)
     }
-    ElMessage.error(res.data.message || '服务异常')
-    return Promise.reject(res.data)
   },
   (err) => {
     if (err.response?.status === 401) {
-      router.push('/login')
+      const userStore = useUserStore()
+      userStore.clearUser()
+      router.push('/mine')
     }
     ElMessage.error(err.response?.data?.message || '服务异常')
     return Promise.reject(err)

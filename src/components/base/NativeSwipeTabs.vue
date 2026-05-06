@@ -194,7 +194,10 @@ const handleTouchMove = (event) => {
       return
     }
 
-    event.preventDefault() // 阻止默认行为，避免页面滚动
+    // 只在事件可取消时阻止默认行为，避免浏览器警告
+    if (event.cancelable) {
+      event.preventDefault()
+    }
 
     // 计算新的位置，添加边界限制
     let newTranslateX = startTranslateX.value + deltaX

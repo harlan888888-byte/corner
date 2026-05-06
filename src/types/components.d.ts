@@ -11,6 +11,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AdminLogin: typeof import('./../components/business/AdminLogin.vue')['default']
+    AdminPanel: typeof import('./../components/business/AdminPanel.vue')['default']
     CategorySelector: typeof import('./../components/page/home/CategorySelector.vue')['default']
     CityPicker: typeof import('./../components/business/CityPicker.vue')['default']
     DialogStackExample: typeof import('./../components/base/DialogStackExample.vue')['default']
@@ -28,6 +30,7 @@ declare module 'vue' {
     StoreList: typeof import('./../components/business/StoreList.vue')['default']
     SwipeTabs: typeof import('./../components/base/SwipeTabs.vue')['default']
     TargetMap: typeof import('./../components/base/TargetMap.vue')['default']
+    ToastMessage: typeof import('./../components/base/ToastMessage.vue')['default']
     VanImagePreview: typeof import('vant/es')['ImagePreview']
     VanLoading: typeof import('vant/es')['Loading']
     VanTabbar: typeof import('vant/es')['Tabbar']
