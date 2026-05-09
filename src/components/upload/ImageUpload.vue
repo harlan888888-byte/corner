@@ -1,7 +1,14 @@
 <template>
   <div class="image-upload">
-    <div class="upload-area" @click="triggerUpload">
-      <img v-if="imageUrl" :src="imageUrl" class="upload-preview" />
+    <div
+      class="upload-area"
+      :class="{ 'has-image': imageUrl && !loading }"
+      @click="triggerUpload"
+    >
+      <img v-if="imageUrl && !loading" :src="imageUrl" class="upload-preview" />
+      <div v-else-if="loading" class="upload-loading">
+        <div class="loading-spinner"></div>
+      </div>
       <div v-else class="upload-placeholder">
         <span class="upload-icon">+</span>
         <span class="upload-text">点击上传</span>
@@ -18,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -39,6 +46,15 @@ const emit = defineEmits(['update:modelValue', 'success', 'error'])
 
 const fileInput = ref(null)
 const imageUrl = ref(props.modelValue)
+const loading = ref(false)
+
+// 监听 modelValue 变化，同步更新 imageUrl
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    imageUrl.value = newVal
+  }
+)
 
 const triggerUpload = () => {
   fileInput.value.click()
@@ -54,6 +70,8 @@ const handleFileChange = async (e) => {
     return
   }
 
+  loading.value = true
+
   try {
     const formData = new FormData()
     formData.append('image', file)
@@ -68,6 +86,7 @@ const handleFileChange = async (e) => {
   } catch (error) {
     emit('error', '上传失败')
   } finally {
+    loading.value = false
     e.target.value = ''
   }
 }
@@ -96,10 +115,38 @@ const handleFileChange = async (e) => {
   border-color: #667eea;
 }
 
+.upload-area.has-image {
+  border: none;
+}
+
 .upload-preview {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.upload-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ddd;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .upload-placeholder {

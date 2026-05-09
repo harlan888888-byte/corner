@@ -2,9 +2,16 @@
   <div class="mine-tab-container">
     <!-- 如果是管理员，显示用户信息和管理入口 -->
     <template v-if="userStore.isAdmin && userStore.token">
-      <div class="user-info-card">
-        <div class="avatar">
-          {{ userStore.user.username?.charAt(0)?.toUpperCase() || 'A' }}
+      <div class="user-info-card" @click="goToAdminEdit">
+        <div class="avatar" :class="{ 'has-image': userStore.user.user_img }">
+          <img
+            v-if="userStore.user.user_img"
+            :src="getAvatarUrl()"
+            class="avatar-img"
+          />
+          <span v-else>{{
+            userStore.user.username?.charAt(0)?.toUpperCase() || 'A'
+          }}</span>
         </div>
         <div class="info">
           <div class="name">
@@ -12,12 +19,19 @@
           </div>
           <div class="role">管理员</div>
         </div>
+        <div class="arrow">›</div>
       </div>
 
       <div class="menu-list">
         <div class="menu-item" @click="goToAdminList">
           <span class="menu-icon">🏪</span>
           <span class="menu-text">店铺管理</span>
+          <span class="menu-arrow">›</span>
+        </div>
+
+        <div class="menu-item" @click="goToAdminManager">
+          <span class="menu-icon">👥</span>
+          <span class="menu-text">新建管理员</span>
           <span class="menu-arrow">›</span>
         </div>
       </div>
@@ -66,6 +80,18 @@ const goToAdminList = () => {
   router.push('/admin')
 }
 
+const goToAdminEdit = () => {
+  router.push('/admin-edit')
+}
+
+const goToAdminManager = () => {
+  router.push('/admin-manager')
+}
+
+const getAvatarUrl = () => {
+  return userStore.user.user_img || ''
+}
+
 const handleLogout = () => {
   userStore.logout()
 }
@@ -83,6 +109,13 @@ const handleLogout = () => {
   padding: 20px;
   background: white;
   margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.arrow {
+  font-size: 20px;
+  color: #ccc;
+  margin-left: auto;
 }
 
 .avatar {
@@ -97,6 +130,17 @@ const handleLogout = () => {
   font-size: 24px;
   font-weight: bold;
   margin-right: 15px;
+  overflow: hidden;
+}
+
+.avatar.has-image {
+  background: none;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .info {

@@ -57,7 +57,7 @@
 <script setup>
 import { computed } from 'vue'
 import defaultImgSrc from '@/assets/icons/miss_store.svg'
-import { getCategoryColor } from '@/utils/categoryColors'
+import { getCategoryColor } from '@/data/categories'
 
 const props = defineProps({
   item: {

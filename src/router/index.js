@@ -45,6 +45,16 @@ const router = createRouter({
           path: '/admin',
           name: 'Admin',
           component: () => import('@/views/admin/StoreList.vue')
+        },
+        {
+          path: '/admin-manager',
+          name: 'AdminManager',
+          component: () => import('@/views/admin/AdminManager.vue')
+        },
+        {
+          path: '/admin-edit',
+          name: 'AdminEdit',
+          component: () => import('@/views/admin/AdminEdit.vue')
         }
       ]
     }
@@ -92,7 +102,10 @@ router.afterEach((to) => {
 router.beforeEach((to) => {
   const userStore = useUserStore()
   // 检查是否访问管理员相关路由
-  if (to.path === '/admin' && !userStore.isAdmin) {
+  if (
+    (to.path === '/admin' || to.path === '/admin-manager') &&
+    !userStore.isAdmin
+  ) {
     return '/mine'
   }
 })

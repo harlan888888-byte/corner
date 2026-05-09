@@ -32,8 +32,10 @@ declare module 'vue' {
     StoreList: typeof import('./../components/business/StoreList.vue')['default']
     SwipeTabs: typeof import('./../components/base/SwipeTabs.vue')['default']
     TargetMap: typeof import('./../components/base/TargetMap.vue')['default']
+    VanArea: typeof import('vant/es')['Area']
     VanImagePreview: typeof import('vant/es')['ImagePreview']
     VanLoading: typeof import('vant/es')['Loading']
+    VanPopup: typeof import('vant/es')['Popup']
     VanTabbar: typeof import('vant/es')['Tabbar']
     VanTabbarItem: typeof import('vant/es')['TabbarItem']
   }

@@ -94,7 +94,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getStoreDetail } from '@/api/home/store'
 import defaultImgSrc from '@/assets/icons/miss_store.svg'
 import { useVanImagePreview } from '@/composables/vant-utils/useVanImagePreview'
-import { getCategoryColor } from '@/utils/categoryColors'
+import { getCategoryColor } from '@/data/categories'
 
 const route = useRoute()
 const router = useRouter()

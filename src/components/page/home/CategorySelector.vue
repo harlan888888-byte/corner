@@ -5,7 +5,14 @@
     <div class="selector-header" @click="toggleExpand">
       <div class="selected-category">
         <span class="label">类型：</span>
-        <span class="value">{{ selectedCategory || '全部' }}</span>
+        <span
+          class="value"
+          :style="{
+            backgroundColor: selectedCategoryColor.backgroundColor,
+            color: selectedCategoryColor.color
+          }"
+          >{{ selectedCategory || '全部' }}</span
+        >
       </div>
       <div class="expand-btn">
         <span class="expand-icon">{{ isExpanded ? '▲' : '▼' }}</span>
@@ -21,6 +28,9 @@
           :key="category"
           class="category-item"
           :class="{ active: selectedCategory === category }"
+          :style="
+            selectedCategory === category ? getCategoryColor(category) : {}
+          "
           @click="handleCategoryClick(category)"
         >
           {{ category }}
@@ -31,7 +41,8 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
+import { homeCategories, getCategoryColor } from '@/data/categories'
 
 // 定义 props
 const props = defineProps({
@@ -41,18 +52,7 @@ const props = defineProps({
   },
   categories: {
     type: Array,
-    default: () => [
-      '全部',
-      '美食',
-      '风景',
-      '露营',
-      '兜风',
-      '商场',
-      '娱乐',
-      '文化',
-      '酒店',
-      '出片'
-    ]
+    default: () => homeCategories
   }
 })
 
@@ -64,6 +64,14 @@ const isExpanded = ref(false)
 
 // 当前选中的类型（内部状态）
 const selectedCategory = ref(props.modelValue)
+
+// 获取选中分类的颜色
+const selectedCategoryColor = computed(() => {
+  if (!selectedCategory.value || selectedCategory.value === '全部') {
+    return { backgroundColor: '#f3e5f5', color: '#673ab7' }
+  }
+  return getCategoryColor(selectedCategory.value)
+})
 
 // 从 localStorage 加载保存的类型
 const loadSavedCategory = () => {
@@ -214,15 +222,14 @@ const handleCategoryClick = (category) => {
     text-align: center;
 
     &.active {
-      background-color: #673ab7;
-      color: white;
+      font-weight: 500;
     }
 
     &:hover {
       background-color: #e8e8e8;
 
       &.active {
-        background-color: #7e57c2;
+        opacity: 0.9;
       }
     }
   }

@@ -1,14 +1,30 @@
 <template>
-  <div class="store-list-container">
+  <div class="store-list-container" ref="containerRef">
     <div class="header">
       <div class="back-btn" @click="goBack">‹</div>
       <div class="title">店铺管理</div>
       <div class="add-btn" @click="goAdd">+</div>
     </div>
 
+    <!-- 搜索框 -->
+    <div class="search-bar">
+      <input
+        v-model="searchKeyword"
+        type="text"
+        placeholder="搜索店铺名称"
+        class="search-input"
+        @input="handleSearch"
+      />
+      <span v-if="searchKeyword" class="search-clear" @click="clearSearch"
+        >×</span
+      >
+    </div>
+
     <div class="store-list">
-      <div v-if="loading" class="loading">加载中...</div>
-      <div v-else-if="stores.length === 0" class="empty">暂无店铺</div>
+      <div v-if="loading && stores.length === 0" class="loading">加载中...</div>
+      <div v-else-if="!loading && stores.length === 0" class="empty">
+        暂无店铺
+      </div>
       <template v-else>
         <div
           v-for="store in stores"
@@ -34,6 +50,11 @@
           <div class="store-arrow">›</div>
         </div>
       </template>
+      <!-- 加载更多提示 -->
+      <div v-if="loadingMore" class="loading">加载中...</div>
+      <div v-if="!loading && !hasMore && stores.length > 0" class="no-more">
+        已加载全部
+      </div>
     </div>
 
     <transition name="slide-right">
@@ -49,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getAdminStoreList } from '@/api/admin/store'
 import { useAdminStore } from '@/stores/modules/adminStore'
@@ -59,23 +80,83 @@ const route = useRoute()
 const router = useRouter()
 const adminStore = useAdminStore()
 
+const containerRef = ref(null)
 const stores = ref([])
 const loading = ref(true)
+const loadingMore = ref(false)
+const searchKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+const hasMore = computed(() => currentPage.value * pageSize.value < total.value)
 
 const showEdit = computed(() => !!route.query.edit)
 const isEdit = computed(() => route.query.edit !== 'add')
 
-const fetchStores = async () => {
-  loading.value = true
+const fetchStores = async (page = 1, keyword = '', append = false) => {
+  const loadMore = append
+  if (loadMore) {
+    loadingMore.value = true
+  } else {
+    loading.value = true
+  }
+
   try {
-    const res = await getAdminStoreList()
+    const params = {
+      page,
+      pageSize: pageSize.value,
+      keyword
+    }
+    const res = await getAdminStoreList(params)
     if (res.data.code === 200) {
-      stores.value = res.data.data
+      if (loadMore) {
+        stores.value = [...stores.value, ...res.data.data]
+      } else {
+        stores.value = res.data.data
+      }
+      total.value = res.data.count || 0
+      currentPage.value = page
     }
   } catch (error) {
     console.error('获取店铺列表失败:', error)
   } finally {
     loading.value = false
+    loadingMore.value = false
+  }
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchStores(1, searchKeyword.value, false)
+}
+
+const clearSearch = () => {
+  searchKeyword.value = ''
+  currentPage.value = 1
+  fetchStores(1, '', false)
+}
+
+const loadMore = () => {
+  if (!hasMore.value || loadingMore.value) return
+  fetchStores(currentPage.value + 1, searchKeyword.value, true)
+}
+
+// 滚动加载更多
+const handleScroll = () => {
+  const container = containerRef.value
+  if (!container) return
+
+  const scrollTop = container.scrollTop
+  const windowHeight = container.clientHeight
+  const scrollHeight = container.scrollHeight
+
+  if (
+    scrollTop + windowHeight >= scrollHeight - 50 &&
+    hasMore.value &&
+    !loadingMore.value &&
+    !loading.value
+  ) {
+    loadMore()
   }
 }
 
@@ -100,17 +181,30 @@ const closeEdit = () => {
 }
 
 const handleSaved = () => {
-  fetchStores()
+  currentPage.value = 1
+  fetchStores(1, searchKeyword.value, false)
   closeEdit()
 }
 
 const handleDeleted = () => {
-  fetchStores()
+  currentPage.value = 1
+  fetchStores(1, searchKeyword.value, false)
   closeEdit()
 }
 
 onMounted(() => {
-  fetchStores()
+  fetchStores(1, '', false)
+  // 绑定滚动事件到容器
+  if (containerRef.value) {
+    containerRef.value.addEventListener('scroll', handleScroll)
+  }
+})
+
+onUnmounted(() => {
+  // 解绑滚动事件
+  if (containerRef.value) {
+    containerRef.value.removeEventListener('scroll', handleScroll)
+  }
 })
 </script>
 
@@ -166,6 +260,37 @@ onMounted(() => {
   justify-content: center;
   font-size: 28px;
   color: #667eea;
+  cursor: pointer;
+}
+
+.search-bar {
+  position: relative;
+  padding: 10px 15px;
+  background: #f6f6f6;
+}
+
+.search-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 40px 0 15px;
+  border: none;
+  border-radius: 20px;
+  background: white;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.search-clear {
+  position: absolute;
+  right: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+  text-align: center;
+  font-size: 18px;
+  color: #999;
   cursor: pointer;
 }
 
@@ -249,6 +374,13 @@ onMounted(() => {
   padding: 50px 20px;
   color: #999;
   font-size: 14px;
+}
+
+.no-more {
+  text-align: center;
+  padding: 15px;
+  color: #ccc;
+  font-size: 13px;
 }
 
 .slide-right-enter-active,
